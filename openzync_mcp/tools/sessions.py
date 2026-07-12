@@ -54,7 +54,6 @@ async def list_sessions(
     client = ctx.lifespan_context["client"]
     try:
         result = await client.sessions.list(
-            project_id=project_id,
             limit=limit,
             cursor=cursor,
         )

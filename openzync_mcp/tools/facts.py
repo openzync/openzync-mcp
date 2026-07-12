@@ -58,7 +58,6 @@ async def add_fact(
     client = ctx.lifespan_context["client"]
     try:
         response = await client.facts.add(
-            project_id=project_id,
             facts=facts,
             session_id=session_id,
         )
@@ -109,7 +108,6 @@ async def list_facts(
     client = ctx.lifespan_context["client"]
     try:
         results = await client.graph.search(
-            project_id=project_id,
             query=query,
             types="facts",
             limit=limit,

@@ -64,7 +64,6 @@ async def get_user_graph(
         # ── Collect entities ──────────────────────────────────────────────
         entities: list[dict[str, Any]] = []
         async for node in await client.graph.nodes(
-            project_id=project_id,
             entity_type=entity_type,
             limit=limit,
         ):
@@ -88,7 +87,6 @@ async def get_user_graph(
 
         edge_results = await asyncio.gather(*[
             client.graph.edges(
-                project_id=project_id,
                 subject_id=e["id"],
                 limit=limit,
             )

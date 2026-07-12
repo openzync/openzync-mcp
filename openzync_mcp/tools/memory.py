@@ -53,7 +53,6 @@ async def add_memory(
     client = ctx.lifespan_context["client"]
     try:
         response = await client.memory.ingest(
-            project_id=project_id,
             messages=messages,
             session_id=session_id,
         )
@@ -107,7 +106,6 @@ async def get_context(
     client = ctx.lifespan_context["client"]
     try:
         response = await client.memory.get_context(
-            project_id=project_id,
             query=query,
             limit=limit,
         )
@@ -168,7 +166,6 @@ async def search_memory(
     client = ctx.lifespan_context["client"]
     try:
         results = await client.graph.search(
-            project_id=project_id,
             query=query,
             types=types,
             limit=limit,
@@ -219,7 +216,7 @@ async def delete_memory(ctx: Context, project_id: str) -> str:
 
     client = ctx.lifespan_context["client"]
     try:
-        await client.memory.delete(project_id=project_id)
+        await client.memory.delete()
         elapsed = time.monotonic() - start
         logger.info("mcp.tool.success tool=%s duration_ms=%d",
                     "delete_memory", round(elapsed * 1000))
