@@ -6,7 +6,7 @@ compliance, transport negotiation (stdio/SSE/HTTP), schema generation,
 and input validation automatically.
 
 Usage:
-    python -m services.mcp --transport stdio
+    python -m openzync_mcp --transport stdio
 
 The OpenZync SDK client lifecycle is managed via a FastMCP lifespan.
 Tools access the client through the ``ctx.lifespan_context["client"]``
@@ -92,6 +92,6 @@ mcp = FastMCP(
 
 # ── Register tool modules (import triggers @mcp.tool decoration) ──────────
 
-from services.mcp.tools import facts, graph, memory, sessions, users  # noqa: F401, E402
+from openzync_mcp.tools import facts, graph, memory, sessions, users  # noqa: F401, E402
 
 __all__ = ["mcp"]

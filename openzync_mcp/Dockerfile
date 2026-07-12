@@ -6,7 +6,7 @@
 #   2. runtime — minimal image that copies only the built artifacts + source
 #
 # Usage:
-#   docker build -t openzync-mcp:latest -f services/mcp/Dockerfile .
+#   docker build -t openzync-mcp:latest -f openzync_mcp/Dockerfile .
 #   docker run -p 8100:8100 --env-file .env openzync-mcp:latest
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -38,4 +38,4 @@ EXPOSE 8100
 # The MCP server requires OPENZYN_API_KEY to be set at runtime.
 # Default transport is stdio; override with --transport http --port 8100
 # for HTTP transport, or --transport sse for SSE transport.
-CMD ["python", "-m", "services.mcp", "--transport", "http", "--host", "0.0.0.0", "--port", "8100"]
+CMD ["python", "-m", "openzync_mcp", "--transport", "http", "--host", "0.0.0.0", "--port", "8100"]

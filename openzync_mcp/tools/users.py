@@ -10,7 +10,7 @@ import time
 
 from fastmcp import Context
 
-from services.mcp.server import mcp
+from openzync_mcp.server import mcp
 
 logger = logging.getLogger("openzync.mcp.tools.users")
 

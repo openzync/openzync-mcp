@@ -1,9 +1,9 @@
 """Entry point for the OpenZync FastMCP server.
 
 Usage:
-    python -m services.mcp --transport stdio
-    python -m services.mcp --transport http --port 8100
-    python -m services.mcp --transport sse --port 8100
+    python -m openzync_mcp --transport stdio
+    python -m openzync_mcp --transport http --port 8100
+    python -m openzync_mcp --transport sse --port 8100
 
 The server connects to the OpenZync API via the Python SDK (``AsyncOpenZync``)
 and exposes its capabilities as MCP tools over the chosen transport.
@@ -67,7 +67,7 @@ def main() -> None:
     os.environ["OPENZYN_BASE_URL"] = args.base_url
 
     # Import the FastMCP server (triggers tool registration).
-    from services.mcp.server import mcp
+    from openzync_mcp.server import mcp
 
     logger.info(
         "Starting MCP server (transport=%s, base_url=%s)",
