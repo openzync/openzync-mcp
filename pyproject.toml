@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openzync-mcp"
+version = "0.1.0"
+description = "MCP (Model Context Protocol) server for OpenZync — agent memory tools for any MCP-compatible client."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+    { name = "Rohan Shaw", email = "rohnsha0@gmail.com" },
+]
+keywords = ["mcp", "agent", "memory", "openzync", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "httpx>=0.27.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/rohnsha0/openzync"
+Source = "https://github.com/rohnsha0/openzync"
