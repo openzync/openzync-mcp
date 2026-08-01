@@ -41,8 +41,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--base-url",
-        default="http://localhost:8000",
-        help="OpenZync API base URL (default: http://localhost:8000)",
+        default=os.environ.get("OPENZYN_BASE_URL", "http://localhost:8000"),
+        help="OpenZync API base URL (default: $OPENZYN_BASE_URL or http://localhost:8000)",
     )
     args = parser.parse_args()
 
@@ -57,8 +57,7 @@ def main() -> None:
     api_key = args.api_key or os.environ.get("OPENZYN_API_KEY")
     if not api_key:
         logger.error(
-            "API key is required.  Pass --api-key or set the OPENZYN_API_KEY "
-            "environment variable."
+            "API key is required.  Pass --api-key or set the OPENZYN_API_KEY environment variable."
         )
         sys.exit(1)
 

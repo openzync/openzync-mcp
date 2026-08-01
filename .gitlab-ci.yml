@@ -1,0 +1,90 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OpenZync MCP — GitLab CI pipeline (standalone repo)
+# ──────────────────────────────────────────────────────────────────────────────
+# openzync-mcp is its own git repository — all jobs run from the repo root.
+# The `openzync` SDK is a normal dependency pulled from PyPI.
+#
+# Stages:
+#   lint            → ruff
+#   test            → pytest with coverage (unit only)
+#   build           → Docker image (main/tags only)
+#
+# Credentials: openzync-mcp is a thin stateless HTTP/MCP translation layer.
+#   No database, no Redis, no secrets — no CI/CD variables required.
+#   NEVER hardcode credentials in this file.
+# ──────────────────────────────────────────────────────────────────────────────
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  COLUMNS: "120"
+
+stages:
+  - lint
+  - test
+  - build
+
+default:
+  image: python:3.12-slim
+  cache:
+    key: "$CI_COMMIT_REF_SLUG"
+    paths:
+      - .cache/pip/
+      - .venv/
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LINT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ruff:
+  stage: lint
+  script:
+    - pip install ruff
+    - ruff check . --output-format=gitlab
+    - ruff format --check .
+  allow_failure: false
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TESTS  (unit only — no Postgres/Redis required)
+# ═══════════════════════════════════════════════════════════════════════════════
+# openzync-mcp is stateless: the SDK client is mocked in tests, so no live
+# services or CI service containers are needed.
+
+test:
+  stage: test
+  script:
+    - pip install -e ".[dev]"
+    - pytest tests/ -v
+      --cov=openzync_mcp
+      --cov-report=term --cov-report=xml:coverage.xml
+      --cov-fail-under=80
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+)%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: gocover
+        path: coverage.xml
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BUILD  (Docker image — main branch and tags only)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Build context is the repo root (`.`) — the Dockerfile COPYs the package
+# source from within this repo; the openzync SDK comes from PyPI.
+
+build-mcp:
+  stage: build
+  image: docker:24
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker build -t openzync-mcp:${CI_COMMIT_SHORT_SHA:-latest} -f openzync_mcp/Dockerfile .
+    - docker tag openzync-mcp:${CI_COMMIT_SHORT_SHA} openzync-mcp:latest
+  needs: ["test"]
+  only:
+    - main
+    - tags
+  except:
+    - schedules

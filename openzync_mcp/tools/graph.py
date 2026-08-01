@@ -56,8 +56,13 @@ async def get_user_graph(
         raise ValueError("limit must be between 1 and 200.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s entity_type=%s limit=%d",
-                "get_user_graph", project_id, entity_type, limit)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s entity_type=%s limit=%d",
+        "get_user_graph",
+        project_id,
+        entity_type,
+        limit,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -67,17 +72,22 @@ async def get_user_graph(
             entity_type=entity_type,
             limit=limit,
         ):
-            entities.append({
-                "id": str(node.id),
-                "name": node.name,
-                "type": node.type,
-                "summary": node.summary,
-            })
+            entities.append(
+                {
+                    "id": str(node.id),
+                    "name": node.name,
+                    "type": node.type,
+                    "summary": node.summary,
+                }
+            )
 
         if not entities:
             elapsed = time.monotonic() - start
-            logger.info("mcp.tool.success tool=%s duration_ms=%d entity_count=0",
-                        "get_user_graph", round(elapsed * 1000))
+            logger.info(
+                "mcp.tool.success tool=%s duration_ms=%d entity_count=0",
+                "get_user_graph",
+                round(elapsed * 1000),
+            )
             return "No entities found in the graph."
 
         # ── Collect edges for all entities in parallel ────────────────────
@@ -85,13 +95,16 @@ async def get_user_graph(
         # return_exceptions so a single timeout doesn't lose all edges.
         source_entities = entities[:_MAX_EDGE_SOURCES]
 
-        edge_results = await asyncio.gather(*[
-            client.graph.edges(
-                subject_id=e["id"],
-                limit=limit,
-            )
-            for e in source_entities
-        ], return_exceptions=True)
+        edge_results = await asyncio.gather(
+            *[
+                client.graph.edges(
+                    subject_id=e["id"],
+                    limit=limit,
+                )
+                for e in source_entities
+            ],
+            return_exceptions=True,
+        )
 
         edges: list[dict[str, Any]] = []
         seen_pairs: set[tuple[str, str, str]] = set()  # dedup (source, target, type)
@@ -100,20 +113,24 @@ async def get_user_graph(
             if isinstance(result, Exception):
                 failed_sources += 1
                 logger.warning(
-                    "mcp.tool.partial_failure tool=get_user_graph "
-                    "entity_id=%s error=%s",
-                    source_entities[idx]["id"], result,
+                    "mcp.tool.partial_failure tool=get_user_graph entity_id=%s error=%s",
+                    source_entities[idx]["id"],
+                    result,
                 )
                 continue
             async for edge in result:
-                pair = (edge.source_id, edge.target_id, edge.type)
+                # SDK edges() yields raw dicts (unlike nodes(), which wraps
+                # GraphNode) — dict access, not attribute access.
+                pair = (edge["source_id"], edge["target_id"], edge["type"])
                 if pair not in seen_pairs:
                     seen_pairs.add(pair)
-                    edges.append({
-                        "type": edge.type,
-                        "source_id": edge.source_id,
-                        "target_id": edge.target_id,
-                    })
+                    edges.append(
+                        {
+                            "type": edge["type"],
+                            "source_id": edge["source_id"],
+                            "target_id": edge["target_id"],
+                        }
+                    )
                     if len(edges) >= limit:
                         break
             if len(edges) >= limit:
@@ -124,9 +141,12 @@ async def get_user_graph(
         logger.info(
             "mcp.tool.success tool=%s duration_ms=%d entity_count=%d edge_count=%d "
             "edge_sources_queried=%d edge_sources_failed=%d",
-            "get_user_graph", round(elapsed * 1000),
-            len(entities), len(edges),
-            len(source_entities), failed_sources,
+            "get_user_graph",
+            round(elapsed * 1000),
+            len(entities),
+            len(edges),
+            len(source_entities),
+            failed_sources,
         )
 
         # ── Format output ─────────────────────────────────────────────────
@@ -140,7 +160,7 @@ async def get_user_graph(
                 note += f", {failed_sources} skipped due to error"
             note += ")"
             text_parts.append(f"\n{len(edges)} edge(s){note}:")
-            for ed in edges[: limit]:
+            for ed in edges[:limit]:
                 text_parts.append(
                     f"  [{ed['type']}] {ed['source_id'][:8]}... → {ed['target_id'][:8]}..."
                 )
@@ -150,7 +170,12 @@ async def get_user_graph(
         return "\n".join(text_parts)
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s entity_type=%s",
-                     "get_user_graph", round(elapsed * 1000), project_id, entity_type,
-                     exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s entity_type=%s",
+            "get_user_graph",
+            round(elapsed * 1000),
+            project_id,
+            entity_type,
+            exc_info=True,
+        )
         raise

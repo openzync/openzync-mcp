@@ -40,8 +40,7 @@ async def create_user(
         raise ValueError("external_id must be a non-empty string.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s external_id=%s name=%s",
-                "create_user", external_id, name)
+    logger.info("mcp.tool.invoke tool=%s external_id=%s name=%s", "create_user", external_id, name)
 
     client = ctx.lifespan_context["client"]
     try:
@@ -51,8 +50,13 @@ async def create_user(
         )
 
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d user_id=%s external_id=%s",
-                    "create_user", round(elapsed * 1000), user.id, user.external_id)
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d user_id=%s external_id=%s",
+            "create_user",
+            round(elapsed * 1000),
+            user.id,
+            user.external_id,
+        )
 
         return (
             f"User created successfully.\n"
@@ -62,6 +66,11 @@ async def create_user(
         )
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d external_id=%s",
-                     "create_user", round(elapsed * 1000), external_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d external_id=%s",
+            "create_user",
+            round(elapsed * 1000),
+            external_id,
+            exc_info=True,
+        )
         raise

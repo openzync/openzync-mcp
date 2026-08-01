@@ -48,8 +48,13 @@ async def list_sessions(
         raise ValueError("limit must be between 1 and 200.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s limit=%d cursor=%s",
-                "list_sessions", project_id, limit, cursor)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s limit=%d cursor=%s",
+        "list_sessions",
+        project_id,
+        limit,
+        cursor,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -63,8 +68,13 @@ async def list_sessions(
         has_more = result.get("has_more", False)
 
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d session_count=%d has_more=%s",
-                    "list_sessions", round(elapsed * 1000), len(sessions), has_more)
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d session_count=%d has_more=%s",
+            "list_sessions",
+            round(elapsed * 1000),
+            len(sessions),
+            has_more,
+        )
 
         if not sessions:
             return "No sessions found."
@@ -78,11 +88,18 @@ async def list_sessions(
 
         # Append pagination hint
         if has_more and next_cursor:
-            lines.append(f"\nMore sessions available. Use cursor=\"{next_cursor}\" for the next page.")
+            lines.append(
+                f'\nMore sessions available. Use cursor="{next_cursor}" for the next page.'
+            )
 
         return "\n".join(lines)
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s",
-                     "list_sessions", round(elapsed * 1000), project_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "list_sessions",
+            round(elapsed * 1000),
+            project_id,
+            exc_info=True,
+        )
         raise

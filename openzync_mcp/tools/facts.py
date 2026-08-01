@@ -49,11 +49,18 @@ async def add_fact(
             raise ValueError(f"Fact at index {i} must be a dict, got {type(fact).__name__}.")
         missing = {"subject", "predicate", "object"} - set(fact.keys())
         if missing:
-            raise ValueError(f"Fact at index {i} is missing required key(s): {', '.join(sorted(missing))}.")
+            raise ValueError(
+                f"Fact at index {i} is missing required key(s): {', '.join(sorted(missing))}."
+            )
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s fact_count=%d session_id=%s",
-                "add_fact", project_id, len(facts), session_id)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s fact_count=%d session_id=%s",
+        "add_fact",
+        project_id,
+        len(facts),
+        session_id,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -62,17 +69,26 @@ async def add_fact(
             session_id=session_id,
         )
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d accepted_count=%d job_id=%s",
-                    "add_fact", round(elapsed * 1000),
-                    response.accepted_count, response.job_id)
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d accepted_count=%d job_id=%s",
+            "add_fact",
+            round(elapsed * 1000),
+            response.accepted_count,
+            response.job_id,
+        )
         return (
-            f"{response.accepted_count} fact(s) accepted for processing "
-            f"(job: {response.job_id})."
+            f"{response.accepted_count} fact(s) accepted for processing (job: {response.job_id})."
         )
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s fact_count=%d",
-                     "add_fact", round(elapsed * 1000), project_id, len(facts), exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s fact_count=%d",
+            "add_fact",
+            round(elapsed * 1000),
+            project_id,
+            len(facts),
+            exc_info=True,
+        )
         raise
 
 
@@ -102,8 +118,13 @@ async def list_facts(
         raise ValueError("limit must be between 1 and 100.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s query=%s limit=%d",
-                "list_facts", project_id, query, limit)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s query=%s limit=%d",
+        "list_facts",
+        project_id,
+        query,
+        limit,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -114,8 +135,12 @@ async def list_facts(
         )
 
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d result_count=%d",
-                    "list_facts", round(elapsed * 1000), len(results))
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d result_count=%d",
+            "list_facts",
+            round(elapsed * 1000),
+            len(results),
+        )
 
         if not results:
             return "No facts found."
@@ -129,6 +154,11 @@ async def list_facts(
         return "\n".join(lines)
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s",
-                     "list_facts", round(elapsed * 1000), project_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "list_facts",
+            round(elapsed * 1000),
+            project_id,
+            exc_info=True,
+        )
         raise

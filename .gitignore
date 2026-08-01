@@ -1,0 +1,22 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Test / coverage artifacts ─────────────────────────────────────────────────
+
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+
+.env

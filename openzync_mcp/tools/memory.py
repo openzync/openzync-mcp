@@ -47,8 +47,13 @@ async def add_memory(
         raise ValueError("Maximum 1000 messages per call.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s message_count=%d session_id=%s",
-                "add_memory", project_id, len(messages), session_id)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s message_count=%d session_id=%s",
+        "add_memory",
+        project_id,
+        len(messages),
+        session_id,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -57,17 +62,25 @@ async def add_memory(
             session_id=session_id,
         )
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d episode_count=%d job_id=%s",
-                    "add_memory", round(elapsed * 1000),
-                    response.episode_count, response.job_id)
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d episode_count=%d job_id=%s",
+            "add_memory",
+            round(elapsed * 1000),
+            response.episode_count,
+            response.job_id,
+        )
         return (
-            f"Memory recorded. {response.episode_count} messages ingested "
-            f"(job: {response.job_id})."
+            f"Memory recorded. {response.episode_count} messages ingested (job: {response.job_id})."
         )
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s",
-                     "add_memory", round(elapsed * 1000), project_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "add_memory",
+            round(elapsed * 1000),
+            project_id,
+            exc_info=True,
+        )
         raise
 
 
@@ -100,8 +113,13 @@ async def get_context(
         raise ValueError("limit must be between 1 and 100.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s query_length=%d limit=%d",
-                "get_context", project_id, len(query), limit)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s query_length=%d limit=%d",
+        "get_context",
+        project_id,
+        len(query),
+        limit,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -110,13 +128,22 @@ async def get_context(
             limit=limit,
         )
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d context_length=%d",
-                    "get_context", round(elapsed * 1000), len(response.context))
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d context_length=%d",
+            "get_context",
+            round(elapsed * 1000),
+            len(response.context),
+        )
         return response.context
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s",
-                     "get_context", round(elapsed * 1000), project_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "get_context",
+            round(elapsed * 1000),
+            project_id,
+            exc_info=True,
+        )
         raise
 
 
@@ -156,12 +183,20 @@ async def search_memory(
         raise ValueError("types must be a non-empty comma-separated list.")
     invalid = requested - allowed_types
     if invalid:
-        raise ValueError(f"Invalid type(s): {', '.join(sorted(invalid))}. "
-                         f"Allowed: {', '.join(sorted(allowed_types))}.")
+        raise ValueError(
+            f"Invalid type(s): {', '.join(sorted(invalid))}. "
+            f"Allowed: {', '.join(sorted(allowed_types))}."
+        )
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s query=%s types=%s limit=%d",
-                "search_memory", project_id, query, types, limit)
+    logger.info(
+        "mcp.tool.invoke tool=%s project_id=%s query=%s types=%s limit=%d",
+        "search_memory",
+        project_id,
+        query,
+        types,
+        limit,
+    )
 
     client = ctx.lifespan_context["client"]
     try:
@@ -172,8 +207,12 @@ async def search_memory(
         )
 
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d result_count=%d",
-                    "search_memory", round(elapsed * 1000), len(results))
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d result_count=%d",
+            "search_memory",
+            round(elapsed * 1000),
+            len(results),
+        )
 
         if not results:
             return "No results found."
@@ -187,8 +226,13 @@ async def search_memory(
         return "\n".join(lines)
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s",
-                     "search_memory", round(elapsed * 1000), project_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "search_memory",
+            round(elapsed * 1000),
+            project_id,
+            exc_info=True,
+        )
         raise
 
 
@@ -211,18 +255,23 @@ async def delete_memory(ctx: Context, project_id: str) -> str:
         raise ValueError("project_id is required.")
 
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s",
-                "delete_memory", project_id)
+    logger.info("mcp.tool.invoke tool=%s project_id=%s", "delete_memory", project_id)
 
     client = ctx.lifespan_context["client"]
     try:
         await client.memory.delete()
         elapsed = time.monotonic() - start
-        logger.info("mcp.tool.success tool=%s duration_ms=%d",
-                    "delete_memory", round(elapsed * 1000))
+        logger.info(
+            "mcp.tool.success tool=%s duration_ms=%d", "delete_memory", round(elapsed * 1000)
+        )
         return "Memory deleted successfully."
     except Exception:
         elapsed = time.monotonic() - start
-        logger.error("mcp.tool.error tool=%s duration_ms=%d project_id=%s",
-                     "delete_memory", round(elapsed * 1000), project_id, exc_info=True)
+        logger.error(
+            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "delete_memory",
+            round(elapsed * 1000),
+            project_id,
+            exc_info=True,
+        )
         raise
