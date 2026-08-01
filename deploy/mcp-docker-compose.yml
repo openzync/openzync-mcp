@@ -1,0 +1,24 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OpenZync MCP Server — VPS Deployment
+# ──────────────────────────────────────────────────────────────────────────────
+# Standalone — does not reference the backend stack. The MCP server reaches
+# the OpenZync API via OPENZYN_BASE_URL (public https://app.openzync.tech).
+#
+# NOTE: filename is mcp-docker-compose.yml (NOT docker-compose.yml) so it
+# never clobbers the frontend's compose file in the same deploy/ directory.
+#
+# Usage:
+#   docker compose -f deploy/mcp-docker-compose.yml up -d
+#   docker compose -f deploy/mcp-docker-compose.yml pull mcp
+#
+# Secrets: reads deploy/mcp.env (written by CI from OPENZYN_* repo secrets).
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  mcp:
+    image: ghcr.io/openzync/openzync-mcp:latest
+    container_name: openzync-mcp
+    env_file: mcp.env
+    ports:
+      - "127.0.0.1:8100:8100"
+    restart: unless-stopped
