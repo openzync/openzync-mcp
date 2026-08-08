@@ -12,6 +12,18 @@ Expose [OpenZync](https://github.com/openzync/openzync-core) agent memory tools 
 
 Built with [FastMCP](https://gofastmcp.com), which handles protocol compliance, transport negotiation (stdio/SSE/HTTP), schema generation, and input validation.
 
+```mermaid
+flowchart LR
+    C1[Claude Desktop] --> M
+    C2[Cursor] --> M
+    C3[VS Code Copilot] --> M
+    M[MCP Server (FastMCP, stdio/SSE/HTTP)] --> API[OpenZync Core API]
+    API --> K1[memory.ingest]
+    API --> K2[graph.search]
+    API --> K3[facts.add]
+    API --> K4[sessions.*]
+```
+
 ## Tools
 
 | Tool | Description |

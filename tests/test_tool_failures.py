@@ -14,7 +14,11 @@ from fastmcp.exceptions import ToolError
 TOOL_FAILURES = [
     (
         "add_memory",
-        {"project_id": "p", "messages": [{"role": "user", "content": "hi"}]},
+        {
+            "project_id": "p",
+            "messages": [{"role": "user", "content": "hi"}],
+            "session_id": "s",
+        },
         "memory.ingest",
     ),
     ("get_context", {"project_id": "p", "query": "ml"}, "memory.get_context"),
@@ -23,7 +27,11 @@ TOOL_FAILURES = [
     ("get_user_graph", {"project_id": "p"}, "graph.nodes"),
     (
         "add_fact",
-        {"project_id": "p", "facts": [{"subject": "a", "predicate": "p", "object": "b"}]},
+        {
+            "project_id": "p",
+            "facts": [{"subject": "a", "predicate": "p", "object": "b"}],
+            "session_id": "s",
+        },
         "facts.add",
     ),
     ("list_facts", {"project_id": "p", "query": "ml"}, "graph.search"),

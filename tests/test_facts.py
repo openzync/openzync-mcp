@@ -18,12 +18,13 @@ async def test_add_fact_success(mcp_client, mock_client) -> None:
         {
             "project_id": PROJECT_ID,
             "facts": [{"subject": "Alice", "predicate": "works_at", "object": "OpenZync"}],
+            "session_id": "session-1",
         },
     )
 
     mock_client.facts.add.assert_awaited_once_with(
         facts=[{"subject": "Alice", "predicate": "works_at", "object": "OpenZync"}],
-        session_id=None,
+        session_id="session-1",
     )
     text = result.content[0].text
     assert "3 fact(s) accepted" in text
@@ -33,17 +34,28 @@ async def test_add_fact_success(mcp_client, mock_client) -> None:
 async def test_add_fact_validation(mcp_client) -> None:
     # Empty facts list.
     with pytest.raises(ToolError, match="At least one fact is required."):
-        await mcp_client.call_tool("add_fact", {"project_id": PROJECT_ID, "facts": []})
+        await mcp_client.call_tool(
+            "add_fact",
+            {"project_id": PROJECT_ID, "facts": [], "session_id": "session-1"},
+        )
 
     # Over the 500-fact cap.
     too_many = [{"subject": "s", "predicate": "p", "object": "o"}] * 501
     with pytest.raises(ToolError, match="Maximum 500 facts per call."):
-        await mcp_client.call_tool("add_fact", {"project_id": PROJECT_ID, "facts": too_many})
+        await mcp_client.call_tool(
+            "add_fact",
+            {"project_id": PROJECT_ID, "facts": too_many, "session_id": "session-1"},
+        )
 
     # Missing required keys (message lists them sorted: object, predicate).
     with pytest.raises(ToolError, match="missing required key") as exc_info:
         await mcp_client.call_tool(
-            "add_fact", {"project_id": PROJECT_ID, "facts": [{"subject": "Alice"}]}
+            "add_fact",
+            {
+                "project_id": PROJECT_ID,
+                "facts": [{"subject": "Alice"}],
+                "session_id": "session-1",
+            },
         )
     assert "object" in str(exc_info.value)
     assert "predicate" in str(exc_info.value)
@@ -52,7 +64,10 @@ async def test_add_fact_validation(mcp_client) -> None:
     # at the boundary, before the tool fn runs (its isinstance guard is
     # defensive dead code).
     with pytest.raises(ToolError, match="Input should be a valid dictionary"):
-        await mcp_client.call_tool("add_fact", {"project_id": PROJECT_ID, "facts": ["nope"]})
+        await mcp_client.call_tool(
+            "add_fact",
+            {"project_id": PROJECT_ID, "facts": ["nope"], "session_id": "session-1"},
+        )
 
 
 async def test_list_facts_success(mcp_client, mock_client) -> None:

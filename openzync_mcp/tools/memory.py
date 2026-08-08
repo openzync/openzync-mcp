@@ -21,7 +21,7 @@ async def add_memory(
     ctx: Context,
     project_id: str,
     messages: list[dict],
-    session_id: str | None = None,
+    session_id: str,
 ) -> str:
     """Add messages to a project's memory.
 
@@ -35,8 +35,8 @@ async def add_memory(
             (``"user"`` | ``"assistant"`` | ``"system"`` | ``"tool"``)
             and ``content`` (message body text).  At least 1 message
             required, maximum 1000.
-        session_id: Optional session external ID.  If omitted, a
-            ``__default__`` session is auto-created for the project.
+        session_id: Session external ID — required, all ingestion targets
+            an existing session.
 
     Returns:
         A confirmation message with the job ID and episode count.

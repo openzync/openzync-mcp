@@ -15,11 +15,15 @@ async def test_add_memory_success(mcp_client, mock_client) -> None:
 
     result = await mcp_client.call_tool(
         "add_memory",
-        {"project_id": PROJECT_ID, "messages": [{"role": "user", "content": "hello"}]},
+        {
+            "project_id": PROJECT_ID,
+            "messages": [{"role": "user", "content": "hello"}],
+            "session_id": "session-1",
+        },
     )
 
     mock_client.memory.ingest.assert_awaited_once_with(
-        messages=[{"role": "user", "content": "hello"}], session_id=None
+        messages=[{"role": "user", "content": "hello"}], session_id="session-1"
     )
     text = result.content[0].text
     assert "2 messages ingested" in text
@@ -29,12 +33,18 @@ async def test_add_memory_success(mcp_client, mock_client) -> None:
 async def test_add_memory_validation(mcp_client) -> None:
     # Empty message list.
     with pytest.raises(ToolError, match="At least one message is required."):
-        await mcp_client.call_tool("add_memory", {"project_id": PROJECT_ID, "messages": []})
+        await mcp_client.call_tool(
+            "add_memory",
+            {"project_id": PROJECT_ID, "messages": [], "session_id": "session-1"},
+        )
 
     # More than the 1000-message cap.
     too_many = [{"role": "user", "content": "x"}] * 1001
     with pytest.raises(ToolError, match="Maximum 1000 messages per call."):
-        await mcp_client.call_tool("add_memory", {"project_id": PROJECT_ID, "messages": too_many})
+        await mcp_client.call_tool(
+            "add_memory",
+            {"project_id": PROJECT_ID, "messages": too_many, "session_id": "session-1"},
+        )
 
 
 async def test_get_context_success(mcp_client, mock_client) -> None:

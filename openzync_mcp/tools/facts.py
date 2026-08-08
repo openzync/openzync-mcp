@@ -21,7 +21,7 @@ async def add_fact(
     ctx: Context,
     project_id: str,
     facts: list[dict],
-    session_id: str | None = None,
+    session_id: str,
 ) -> str:
     """Add business fact triples to a project's knowledge graph.
 
@@ -33,7 +33,8 @@ async def add_fact(
         facts: List of fact dicts, each with ``subject`` (str),
             ``predicate`` (str), ``object`` (str), and optional
             ``confidence`` (float, default 1.0).
-        session_id: Optional session external ID for attribution.
+        session_id: Session external ID — required, the fact triples are
+            attributed to an existing session.
 
     Returns:
         A confirmation message with accepted count and job ID.
