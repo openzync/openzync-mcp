@@ -25,11 +25,12 @@ _MAX_EDGE_SOURCES = 20
 @mcp.tool
 async def get_user_graph(
     ctx: Context,
-    project_id: str,
+    # ⚠️ BREAKING: project_id parameter removed — the SDK resolves the
+    # project from the API key; the param was never used.
     entity_type: str | None = None,
     limit: int = 50,
 ) -> str:
-    """Get the entity graph for a project.
+    """Get the entity graph for your project.
 
     Returns nodes (entities) and edges (relationships) from the
     knowledge graph.  Optionally filter by entity type.
@@ -41,7 +42,6 @@ async def get_user_graph(
     failing entities are skipped with a warning logged.
 
     Args:
-        project_id: The internal UUID of the target project.
         entity_type: Optional entity type filter (e.g. ``"Person"``,
             ``"Organization"``, ``"Topic"``).  When omitted, all
             entity types are returned.
@@ -50,16 +50,13 @@ async def get_user_graph(
     Returns:
         A formatted string listing entities and their relationships.
     """
-    if not project_id:
-        raise ValueError("project_id is required.")
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s project_id=%s entity_type=%s limit=%d",
+        "mcp.tool.invoke tool=%s entity_type=%s limit=%d",
         "get_user_graph",
-        project_id,
         entity_type,
         limit,
     )
@@ -171,10 +168,9 @@ async def get_user_graph(
     except Exception:
         elapsed = time.monotonic() - start
         logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d project_id=%s entity_type=%s",
+            "mcp.tool.error tool=%s duration_ms=%d entity_type=%s",
             "get_user_graph",
             round(elapsed * 1000),
-            project_id,
             entity_type,
             exc_info=True,
         )

@@ -28,9 +28,10 @@ async def create_user(
     auth system).  The combination ``(organization_id, external_id)`` is
     unique within the platform.
 
-    **Admin-only**: this operation requires an org-admin credential (a JWT
-    dashboard session for a user with the ``admin`` role).  Project-scoped
-    API keys and non-admin credentials are rejected with ``401 Unauthorized``.
+    Requires a credential holding the ``members:write`` permission
+    (ADR-007 unified permission model — org-admin JWT sessions and API
+    keys with that scope both qualify).  Credentials without it are
+    rejected by the backend.
 
     Args:
         external_id: Caller-defined user identifier

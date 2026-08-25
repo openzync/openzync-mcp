@@ -19,18 +19,19 @@ logger = logging.getLogger("openzync.mcp.tools.memory")
 @mcp.tool
 async def add_memory(
     ctx: Context,
-    project_id: str,
+    # ⚠️ BREAKING: project_id parameter removed — the SDK resolves the
+    # project from the API key; the param was never used.
     messages: list[dict],
     session_id: str,
 ) -> str:
-    """Add messages to a project's memory.
+    """Add messages to your project's memory.
 
     Messages are persisted immediately as episodes in PostgreSQL and
     queued for async enrichment (entity extraction, fact extraction,
-    embedding, classification, and structured extraction).
+    embedding, classification, and structured extraction).  The target
+    project is resolved from the API key.
 
     Args:
-        project_id: The internal UUID of the target project.
         messages: List of message objects, each with ``role``
             (``"user"`` | ``"assistant"`` | ``"system"`` | ``"tool"``)
             and ``content`` (message body text).  At least 1 message
@@ -48,9 +49,8 @@ async def add_memory(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s project_id=%s message_count=%d session_id=%s",
+        "mcp.tool.invoke tool=%s message_count=%d session_id=%s",
         "add_memory",
-        project_id,
         len(messages),
         session_id,
     )
@@ -75,10 +75,9 @@ async def add_memory(
     except Exception:
         elapsed = time.monotonic() - start
         logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "mcp.tool.error tool=%s duration_ms=%d",
             "add_memory",
             round(elapsed * 1000),
-            project_id,
             exc_info=True,
         )
         raise
@@ -87,7 +86,7 @@ async def add_memory(
 @mcp.tool
 async def get_context(
     ctx: Context,
-    project_id: str,
+    # ⚠️ BREAKING: project_id parameter removed — resolved from the API key.
     query: str,
     limit: int = 20,
 ) -> str:
@@ -99,7 +98,6 @@ async def get_context(
     suitable for inclusion in an LLM prompt.
 
     Args:
-        project_id: The internal UUID of the target project.
         query: A natural-language query describing the needed context
             (e.g. "what does the user know about machine learning").
         limit: Maximum items per source type (1–100, default 20).
@@ -114,9 +112,8 @@ async def get_context(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s project_id=%s query_length=%d limit=%d",
+        "mcp.tool.invoke tool=%s query_length=%d limit=%d",
         "get_context",
-        project_id,
         len(query),
         limit,
     )
@@ -138,10 +135,9 @@ async def get_context(
     except Exception:
         elapsed = time.monotonic() - start
         logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "mcp.tool.error tool=%s duration_ms=%d",
             "get_context",
             round(elapsed * 1000),
-            project_id,
             exc_info=True,
         )
         raise
@@ -150,18 +146,17 @@ async def get_context(
 @mcp.tool
 async def search_memory(
     ctx: Context,
-    project_id: str,
+    # ⚠️ BREAKING: project_id parameter removed — resolved from the API key.
     query: str,
     types: str = "episodes,facts",
     limit: int = 20,
 ) -> str:
-    """Search across a project's memory using hybrid retrieval.
+    """Search across your project's memory using hybrid retrieval.
 
     Searches episodes, facts, and optionally entities matching the query.
     Results are fused via RRF and returned sorted by relevance score.
 
     Args:
-        project_id: The internal UUID of the target project.
         query: Search query string.
         types: Comma-separated result types to include:
             ``"episodes"``, ``"facts"``, ``"entities"``
@@ -190,9 +185,8 @@ async def search_memory(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s project_id=%s query=%s types=%s limit=%d",
+        "mcp.tool.invoke tool=%s query=%s types=%s limit=%d",
         "search_memory",
-        project_id,
         query,
         types,
         limit,
@@ -227,35 +221,30 @@ async def search_memory(
     except Exception:
         elapsed = time.monotonic() - start
         logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "mcp.tool.error tool=%s duration_ms=%d",
             "search_memory",
             round(elapsed * 1000),
-            project_id,
             exc_info=True,
         )
         raise
 
 
+# ⚠️ BREAKING: project_id parameter removed — resolved from the API key.
 @mcp.tool
-async def delete_memory(ctx: Context, project_id: str) -> str:
-    """Delete all memory for a project (soft-delete).
+async def delete_memory(ctx: Context) -> str:
+    """Delete all memory for your project (soft-delete).
 
-    Soft-deletes all episodes (messages) and facts for the project.
-    Sessions remain intact.  This is the GDPR memory-wipe operation
-    and is **not** reversible — deleted data is marked inactive but
-    preserved for a 30-day grace period before hard-purge.
-
-    Args:
-        project_id: The internal UUID of the target project.
+    Soft-deletes all episodes (messages) and facts for the project
+    resolved from the API key.  Sessions remain intact.  This is the
+    GDPR memory-wipe operation and is **not** reversible — deleted data
+    is marked inactive but preserved for a 30-day grace period before
+    hard-purge.
 
     Returns:
         A confirmation message.
     """
-    if not project_id:
-        raise ValueError("project_id is required.")
-
     start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s project_id=%s", "delete_memory", project_id)
+    logger.info("mcp.tool.invoke tool=%s", "delete_memory")
 
     client = ctx.lifespan_context["client"]
     try:
@@ -268,10 +257,9 @@ async def delete_memory(ctx: Context, project_id: str) -> str:
     except Exception:
         elapsed = time.monotonic() - start
         logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d project_id=%s",
+            "mcp.tool.error tool=%s duration_ms=%d",
             "delete_memory",
             round(elapsed * 1000),
-            project_id,
             exc_info=True,
         )
         raise
