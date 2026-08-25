@@ -13,8 +13,6 @@ from fastmcp.exceptions import ToolError
 
 from tests.conftest import async_iter, make_edge_dict, make_node
 
-PROJECT_ID = "proj-123"
-
 
 async def test_get_user_graph_success(mcp_client, mock_client) -> None:
     alice = make_node(name="Alice", type_="Person")
@@ -27,7 +25,7 @@ async def test_get_user_graph_success(mcp_client, mock_client) -> None:
         [make_edge_dict(source_id=alice.id, target_id=bob.id, type_="knows")]
     )
 
-    result = await mcp_client.call_tool("get_user_graph", {"project_id": PROJECT_ID})
+    result = await mcp_client.call_tool("get_user_graph", {})
 
     mock_client.graph.nodes.assert_awaited_once_with(entity_type=None, limit=50)
     assert mock_client.graph.edges.await_count == 2  # one per entity
@@ -42,7 +40,7 @@ async def test_get_user_graph_success(mcp_client, mock_client) -> None:
 async def test_get_user_graph_no_entities(mcp_client, mock_client) -> None:
     mock_client.graph.nodes.side_effect = lambda **kw: async_iter([])
 
-    result = await mcp_client.call_tool("get_user_graph", {"project_id": PROJECT_ID})
+    result = await mcp_client.call_tool("get_user_graph", {})
 
     assert result.content[0].text == "No entities found in the graph."
     # Edge fetching must not be attempted when there are no entities.
@@ -50,14 +48,11 @@ async def test_get_user_graph_no_entities(mcp_client, mock_client) -> None:
 
 
 async def test_get_user_graph_validation(mcp_client) -> None:
-    with pytest.raises(ToolError, match="project_id is required."):
-        await mcp_client.call_tool("get_user_graph", {"project_id": ""})
+    with pytest.raises(ToolError, match="limit must be between 1 and 200."):
+        await mcp_client.call_tool("get_user_graph", {"limit": 0})
 
     with pytest.raises(ToolError, match="limit must be between 1 and 200."):
-        await mcp_client.call_tool("get_user_graph", {"project_id": PROJECT_ID, "limit": 0})
-
-    with pytest.raises(ToolError, match="limit must be between 1 and 200."):
-        await mcp_client.call_tool("get_user_graph", {"project_id": PROJECT_ID, "limit": 201})
+        await mcp_client.call_tool("get_user_graph", {"limit": 201})
 
 
 async def test_get_user_graph_with_entity_type(mcp_client, mock_client) -> None:
@@ -65,9 +60,7 @@ async def test_get_user_graph_with_entity_type(mcp_client, mock_client) -> None:
     mock_client.graph.nodes.side_effect = lambda **kw: async_iter([node])
     mock_client.graph.edges.side_effect = lambda **kw: async_iter([])
 
-    result = await mcp_client.call_tool(
-        "get_user_graph", {"project_id": PROJECT_ID, "entity_type": "Organization"}
-    )
+    result = await mcp_client.call_tool("get_user_graph", {"entity_type": "Organization"})
 
     mock_client.graph.nodes.assert_awaited_once_with(entity_type="Organization", limit=50)
     assert "No relationships found" in result.content[0].text
@@ -86,7 +79,7 @@ async def test_get_user_graph_partial_edge_failure(mcp_client, mock_client) -> N
 
     mock_client.graph.edges.side_effect = edges_side_effect
 
-    result = await mcp_client.call_tool("get_user_graph", {"project_id": PROJECT_ID})
+    result = await mcp_client.call_tool("get_user_graph", {})
 
     text = result.content[0].text
     assert "Found 2 entity(ies):" in text

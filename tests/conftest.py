@@ -100,6 +100,11 @@ def mock_client() -> MagicMock:
     client.facts = AsyncMock()
     client.sessions = AsyncMock()
     client.users = AsyncMock()
+    client.search = AsyncMock()
+    client.observations = AsyncMock()
+    client.classifications = AsyncMock()
+    client.structured_extractions = AsyncMock()
+    client.projects = AsyncMock()
     return client
 
 

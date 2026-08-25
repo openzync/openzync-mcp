@@ -15,28 +15,49 @@ TOOL_FAILURES = [
     (
         "add_memory",
         {
-            "project_id": "p",
             "messages": [{"role": "user", "content": "hi"}],
             "session_id": "s",
         },
         "memory.ingest",
     ),
-    ("get_context", {"project_id": "p", "query": "ml"}, "memory.get_context"),
-    ("search_memory", {"project_id": "p", "query": "ml"}, "graph.search"),
-    ("delete_memory", {"project_id": "p"}, "memory.delete"),
-    ("get_user_graph", {"project_id": "p"}, "graph.nodes"),
+    ("get_context", {"query": "ml"}, "memory.get_context"),
+    ("search_memory", {"query": "ml"}, "graph.search"),
+    ("delete_memory", {}, "memory.delete"),
+    ("get_user_graph", {}, "graph.nodes"),
     (
         "add_fact",
         {
-            "project_id": "p",
             "facts": [{"subject": "a", "predicate": "p", "object": "b"}],
             "session_id": "s",
         },
         "facts.add",
     ),
-    ("list_facts", {"project_id": "p", "query": "ml"}, "graph.search"),
-    ("list_sessions", {"project_id": "p"}, "sessions.list"),
+    ("list_facts", {}, "facts.list"),
+    ("list_sessions", {}, "sessions.list"),
     ("create_user", {"external_id": "ext-1"}, "users.create"),
+    ("get_fact_history", {"fact_id": "f1"}, "facts.history"),
+    ("retract_fact", {"fact_id": "f1"}, "facts.retract"),
+    ("get_session_facts", {"session_id": "s1"}, "sessions.facts"),
+    ("get_session_messages", {"session_id": "s1"}, "sessions.messages"),
+    ("global_search", {"query": "ml"}, "search.global_search"),
+    ("list_observations", {}, "observations.list"),
+    ("list_classifications", {"session_id": "s1"}, "classifications.list"),
+    (
+        "get_classification",
+        {"session_id": "s1", "episode_id": "e1"},
+        "classifications.get_by_episode",
+    ),
+    (
+        "list_structured_extractions",
+        {"session_id": "s1"},
+        "structured_extractions.list",
+    ),
+    (
+        "get_structured_extraction",
+        {"session_id": "s1", "episode_id": "e1"},
+        "structured_extractions.get_by_episode",
+    ),
+    ("update_project_member", {"user_id": "u1"}, "projects.update_member"),
 ]
 
 

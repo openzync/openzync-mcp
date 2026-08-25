@@ -4,6 +4,28 @@ Each module registers one or more tools via ``@mcp.tool`` using the
 server instance from ``openzync_mcp.server``.
 """
 
-from openzync_mcp.tools import facts, graph, memory, sessions, users
+from openzync_mcp.tools import (
+    classifications,
+    extractions,
+    facts,
+    graph,
+    memory,
+    observations,
+    projects,
+    search,
+    sessions,
+    users,
+)
 
-__all__ = ["memory", "facts", "graph", "users", "sessions"]
+__all__ = [
+    "memory",
+    "facts",
+    "graph",
+    "users",
+    "sessions",
+    "search",
+    "observations",
+    "classifications",
+    "extractions",
+    "projects",
+]

@@ -223,8 +223,7 @@ async def get_session_messages(
 
         if response.has_more and response.next_cursor:
             lines.append(
-                f'\nMore messages available. Use cursor="{response.next_cursor}" '
-                "for the next page."
+                f'\nMore messages available. Use cursor="{response.next_cursor}" for the next page.'
             )
 
         return "\n".join(lines)

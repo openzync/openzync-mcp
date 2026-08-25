@@ -92,6 +92,17 @@ mcp = FastMCP(
 
 # ── Register tool modules (import triggers @mcp.tool decoration) ──────────
 
-from openzync_mcp.tools import facts, graph, memory, sessions, users  # noqa: F401, E402
+from openzync_mcp.tools import (  # noqa: F401, E402
+    classifications,
+    extractions,
+    facts,
+    graph,
+    memory,
+    observations,
+    projects,
+    search,
+    sessions,
+    users,
+)
 
 __all__ = ["mcp"]

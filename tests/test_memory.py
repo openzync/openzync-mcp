@@ -7,8 +7,6 @@ from fastmcp.exceptions import ToolError
 
 from openzync.models.memory import ContextResponse, IngestMemoryResponse
 
-PROJECT_ID = "proj-123"
-
 
 async def test_add_memory_success(mcp_client, mock_client) -> None:
     mock_client.memory.ingest.return_value = IngestMemoryResponse(episode_count=2, job_id="job-42")
@@ -16,7 +14,6 @@ async def test_add_memory_success(mcp_client, mock_client) -> None:
     result = await mcp_client.call_tool(
         "add_memory",
         {
-            "project_id": PROJECT_ID,
             "messages": [{"role": "user", "content": "hello"}],
             "session_id": "session-1",
         },
@@ -35,7 +32,7 @@ async def test_add_memory_validation(mcp_client) -> None:
     with pytest.raises(ToolError, match="At least one message is required."):
         await mcp_client.call_tool(
             "add_memory",
-            {"project_id": PROJECT_ID, "messages": [], "session_id": "session-1"},
+            {"messages": [], "session_id": "session-1"},
         )
 
     # More than the 1000-message cap.
@@ -43,16 +40,14 @@ async def test_add_memory_validation(mcp_client) -> None:
     with pytest.raises(ToolError, match="Maximum 1000 messages per call."):
         await mcp_client.call_tool(
             "add_memory",
-            {"project_id": PROJECT_ID, "messages": too_many, "session_id": "session-1"},
+            {"messages": too_many, "session_id": "session-1"},
         )
 
 
 async def test_get_context_success(mcp_client, mock_client) -> None:
     mock_client.memory.get_context.return_value = ContextResponse(context="Relevant context block")
 
-    result = await mcp_client.call_tool(
-        "get_context", {"project_id": PROJECT_ID, "query": "machine learning"}
-    )
+    result = await mcp_client.call_tool("get_context", {"query": "machine learning"})
 
     mock_client.memory.get_context.assert_awaited_once_with(query="machine learning", limit=20)
     assert result.content[0].text == "Relevant context block"
@@ -60,20 +55,16 @@ async def test_get_context_success(mcp_client, mock_client) -> None:
 
 async def test_get_context_validation(mcp_client) -> None:
     with pytest.raises(ToolError, match="query must be a non-empty string."):
-        await mcp_client.call_tool("get_context", {"project_id": PROJECT_ID, "query": ""})
+        await mcp_client.call_tool("get_context", {"query": ""})
 
     with pytest.raises(ToolError, match="query must be a non-empty string."):
-        await mcp_client.call_tool("get_context", {"project_id": PROJECT_ID, "query": "   "})
+        await mcp_client.call_tool("get_context", {"query": "   "})
 
     with pytest.raises(ToolError, match="limit must be between 1 and 100."):
-        await mcp_client.call_tool(
-            "get_context", {"project_id": PROJECT_ID, "query": "ml", "limit": 0}
-        )
+        await mcp_client.call_tool("get_context", {"query": "ml", "limit": 0})
 
     with pytest.raises(ToolError, match="limit must be between 1 and 100."):
-        await mcp_client.call_tool(
-            "get_context", {"project_id": PROJECT_ID, "query": "ml", "limit": 101}
-        )
+        await mcp_client.call_tool("get_context", {"query": "ml", "limit": 101})
 
 
 async def test_search_memory_success(mcp_client, mock_client) -> None:
@@ -84,7 +75,7 @@ async def test_search_memory_success(mcp_client, mock_client) -> None:
 
     result = await mcp_client.call_tool(
         "search_memory",
-        {"project_id": PROJECT_ID, "query": "ml", "types": "episodes,facts", "limit": 5},
+        {"query": "ml", "types": "episodes,facts", "limit": 5},
     )
 
     mock_client.graph.search.assert_awaited_once_with(query="ml", types="episodes,facts", limit=5)
@@ -98,24 +89,22 @@ async def test_search_memory_validation(mcp_client) -> None:
     with pytest.raises(ToolError, match="Invalid type\\(s\\): bogus"):
         await mcp_client.call_tool(
             "search_memory",
-            {"project_id": PROJECT_ID, "query": "ml", "types": "episodes,bogus"},
+            {"query": "ml", "types": "episodes,bogus"},
         )
 
     # Whitespace-only segments strip to "" and are rejected as invalid types.
     with pytest.raises(ToolError, match="Invalid type\\(s\\)"):
         await mcp_client.call_tool(
             "search_memory",
-            {"project_id": PROJECT_ID, "query": "ml", "types": " , "},
+            {"query": "ml", "types": " , "},
         )
 
     with pytest.raises(ToolError, match="limit must be between 1 and 100."):
-        await mcp_client.call_tool(
-            "search_memory", {"project_id": PROJECT_ID, "query": "ml", "limit": 0}
-        )
+        await mcp_client.call_tool("search_memory", {"query": "ml", "limit": 0})
 
 
 async def test_delete_memory_success(mcp_client, mock_client) -> None:
-    result = await mcp_client.call_tool("delete_memory", {"project_id": PROJECT_ID})
+    result = await mcp_client.call_tool("delete_memory", {})
 
     mock_client.memory.delete.assert_awaited_once_with()
     assert result.content[0].text == "Memory deleted successfully."
@@ -123,7 +112,7 @@ async def test_delete_memory_success(mcp_client, mock_client) -> None:
 
 async def test_search_memory_empty_query(mcp_client, mock_client) -> None:
     with pytest.raises(ToolError, match="query must be a non-empty string."):
-        await mcp_client.call_tool("search_memory", {"project_id": PROJECT_ID, "query": ""})
+        await mcp_client.call_tool("search_memory", {"query": ""})
 
     # Validation must short-circuit before touching the SDK.
     mock_client.graph.search.assert_not_called()
@@ -132,15 +121,6 @@ async def test_search_memory_empty_query(mcp_client, mock_client) -> None:
 async def test_search_memory_no_results(mcp_client, mock_client) -> None:
     mock_client.graph.search.return_value = []
 
-    result = await mcp_client.call_tool(
-        "search_memory", {"project_id": PROJECT_ID, "query": "nothing"}
-    )
+    result = await mcp_client.call_tool("search_memory", {"query": "nothing"})
 
     assert result.content[0].text == "No results found."
-
-
-async def test_delete_memory_empty_project_id(mcp_client, mock_client) -> None:
-    with pytest.raises(ToolError, match="project_id is required."):
-        await mcp_client.call_tool("delete_memory", {"project_id": ""})
-
-    mock_client.memory.delete.assert_not_called()
