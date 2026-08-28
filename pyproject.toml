@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openzync-mcp"
-version = "0.1.0"
+version = "1.0.0b2"
 description = "MCP (Model Context Protocol) server for OpenZync — agent memory tools for any MCP-compatible client."
 readme = "README.md"
 requires-python = ">=3.11"

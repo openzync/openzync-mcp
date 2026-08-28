@@ -86,7 +86,7 @@ mcp = FastMCP(
         "facts, manage facts, explore the knowledge graph, and manage "
         "users and sessions."
     ),
-    version="0.1.0",
+    version="1.0.0b2",
     lifespan=openzync_lifespan,
 )
 
