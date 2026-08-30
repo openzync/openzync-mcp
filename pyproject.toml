@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "openzync-mcp"
-version = "1.0.0b2"
+dynamic = ["version"]
 description = "MCP (Model Context Protocol) server for OpenZync — agent memory tools for any MCP-compatible client."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,11 +32,23 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=5.0.0",
+    "towncrier>=24",
 ]
 
 [project.urls]
 Homepage = "https://github.com/rohnsha0/openzync"
 Source = "https://github.com/rohnsha0/openzync"
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "1.0.0b2"
+raw-options = { search_parent_directories = true, local_scheme = "no-local-version" }
+
+[tool.hatch.build.targets.sdist]
+include = ["/openzync_mcp"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["openzync_mcp"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -48,3 +60,52 @@ omit = ["tests/*"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.towncrier]
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+template = "changelog.d/template.j2"
+start_string = "<!-- towncrier release notes start -->\n"
+title_format = "## [{version}] - {project_date}"
+underlines = ["", "", ""]
+orphan_prefix = "trivial"
+
+[[tool.towncrier.type]]
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Added"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Fixed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "change"
+name = "Changed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Removed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Docs"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "internal"
+name = "Internal"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Misc"
+showcontent = false
