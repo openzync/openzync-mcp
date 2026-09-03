@@ -16,7 +16,7 @@
 
 services:
   mcp:
-    image: ghcr.io/openzync/openzync-mcp:latest
+    image: ghcr.io/openzync/openzync-mcp:latest # public since 2026-08-31, no pull auth needed
     container_name: openzync-mcp
     env_file: mcp.env
     ports:

@@ -71,6 +71,11 @@ python -m openzync_mcp --transport stdio
 ### Docker
 
 ```bash
+# Pull — public since 2026-08-31, no login needed
+docker pull ghcr.io/openzync/openzync-mcp:latest
+docker run -e OPENZYN_API_KEY=... -e OPENZYN_BASE_URL=... ghcr.io/openzync/openzync-mcp:latest
+
+# Or build locally
 docker build -t openzync-mcp .
 docker run -e OPENZYN_API_KEY=... -e OPENZYN_BASE_URL=... openzync-mcp
 ```

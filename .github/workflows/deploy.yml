@@ -18,9 +18,9 @@
 #   VPS_HOST          — VPS IP/hostname
 #   VPS_USER          — SSH user on the VPS (deploy)
 #   VPS_SSH_KEY       — ed25519 private key for VPS SSH access
-#   GHCR_PAT          — PAT with packages:write to pull ghcr.io images on VPS
 #   OPENZYN_API_KEY   — OpenZync API key for the MCP server
 #   OPENZYN_BASE_URL  — OpenZync API base URL (https://app.openzync.tech)
+# Note: GHCR images are public since 2026-08-31 — no pull auth needed (GITHUB_TOKEN handles push).
 # ──────────────────────────────────────────────────────────────────────────────
 
 name: Deploy MCP Server
@@ -149,20 +149,19 @@ jobs:
       - name: Extract and deploy MCP container
         uses: appleboy/ssh-action@v1.0.3
         env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
           OPENZYN_API_KEY: ${{ secrets.OPENZYN_API_KEY }}
           OPENZYN_BASE_URL: ${{ secrets.OPENZYN_BASE_URL }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: GHCR_PAT,OPENZYN_API_KEY,OPENZYN_BASE_URL
+          envs: OPENZYN_API_KEY,OPENZYN_BASE_URL
           script: |
             cd /home/deploy/openzync
             tar xzf deploy-files.tar.gz
             rm deploy-files.tar.gz
 
-            echo "$GHCR_PAT" | docker login ghcr.io -u rohnsha0 --password-stdin
+            # GHCR images are public since 2026-08-31 — no docker login needed
 
             cat > deploy/mcp.env <<'ENVEOF'
             OPENZYN_API_KEY=$OPENZYN_API_KEY
