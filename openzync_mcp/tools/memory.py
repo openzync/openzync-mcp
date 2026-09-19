@@ -231,24 +231,31 @@ async def search_memory(
 
 # ⚠️ BREAKING: project_id parameter removed — resolved from the API key.
 @mcp.tool
-async def delete_memory(ctx: Context) -> str:
-    """Delete all memory for your project (soft-delete).
+async def delete_memory(ctx: Context, confirm: str) -> str:
+    """Delete all memory for your project (soft-delete, confirm-gated).
 
     Soft-deletes all episodes (messages) and facts for the project
-    resolved from the API key.  Sessions remain intact.  This is the
-    GDPR memory-wipe operation and is **not** reversible — deleted data
+    resolved from the API key. Sessions remain intact. This is the
+    GDPR memory-wipe operation and is **irreversible** — deleted data
     is marked inactive but preserved for a 30-day grace period before
     hard-purge.
+
+    Args:
+        confirm: Must equal the project ID — the server rejects any other
+            value with 422. There is no default; pass the project ID
+            explicitly to prove intent.
 
     Returns:
         A confirmation message.
     """
+    if not confirm or not confirm.strip():
+        raise ValueError("confirm must be the project ID to confirm deletion.")
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s", "delete_memory")
 
     client = ctx.lifespan_context["client"]
     try:
-        await client.memory.delete()
+        await client.memory.delete(confirm=confirm)
         elapsed = time.monotonic() - start
         logger.info(
             "mcp.tool.success tool=%s duration_ms=%d", "delete_memory", round(elapsed * 1000)
