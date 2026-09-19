@@ -1,12 +1,15 @@
 """Memory tools — add_memory, get_context, search_memory, delete_memory.
 
-These tools provide the core memory operations: ingest messages, retrieve
-context for LLM prompting, hybrid search, and full memory wipe.
+delete_memory is NOT part of the default LLM toolset: it is destructive
+(admin-only) and requires explicit allowlisting via
+``OPENZYN_MCP_ALLOW_WIPE=true``. Without that env var the tool fails loud
+instead of wiping.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import time
 
 from fastmcp import Context
@@ -14,6 +17,19 @@ from fastmcp import Context
 from openzync_mcp.server import mcp
 
 logger = logging.getLogger("openzync.mcp.tools.memory")
+
+
+def _is_wipe_allowlisted() -> bool:
+    """Return True only when the operator explicitly allowlisted wipes.
+
+    Destructive tools must never be on by default for LLM callers —
+    the operator opts in with ``OPENZYN_MCP_ALLOW_WIPE=true`` (admin only).
+    """
+    return os.environ.get("OPENZYN_MCP_ALLOW_WIPE", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
 
 @mcp.tool
@@ -230,9 +246,14 @@ async def search_memory(
 
 
 # ⚠️ BREAKING: project_id parameter removed — resolved from the API key.
+# Admin-only + explicit-allowlist gate: NOT in the default LLM toolset.
 @mcp.tool
 async def delete_memory(ctx: Context, confirm: str) -> str:
     """Delete all memory for your project (soft-delete, confirm-gated).
+
+    ⚠️  Destructive admin-only operation — NOT in the default LLM toolset.
+        Requires explicit allowlisting via ``OPENZYN_MCP_ALLOW_WIPE=true``;
+        without it this tool fails loud and deletes nothing.
 
     Soft-deletes all episodes (messages) and facts for the project
     resolved from the API key. Sessions remain intact. This is the
@@ -247,9 +268,19 @@ async def delete_memory(ctx: Context, confirm: str) -> str:
 
     Returns:
         A confirmation message.
+
+    Raises:
+        ValueError: If ``confirm`` is empty.
+        PermissionError: If wipes are not explicitly allowlisted (admin only).
     """
     if not confirm or not confirm.strip():
         raise ValueError("confirm must be the project ID to confirm deletion.")
+    if not _is_wipe_allowlisted():
+        logger.warning("mcp.tool.rejected tool=%s reason=%s", "delete_memory", "not_allowlisted")
+        raise PermissionError(
+            "delete_memory is not allowlisted — set OPENZYN_MCP_ALLOW_WIPE=true "
+            "(admin only) to explicitly enable this destructive tool."
+        )
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s", "delete_memory")
 
