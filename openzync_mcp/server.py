@@ -9,8 +9,9 @@ Usage:
     python -m openzync_mcp --transport stdio
 
 The OpenZync SDK client lifecycle is managed via a FastMCP lifespan.
-Tools access the client through the ``ctx.lifespan_context["client"]``
-parameter injected by FastMCP.
+Tools access the client through the ``get_client(ctx)`` helper, which
+reads the lifespan context injected by FastMCP and fails loud when the
+API key was never configured.
 """
 
 from __future__ import annotations
@@ -31,11 +32,34 @@ from fastmcp import FastMCP
 # from environment variables set by ``__main__.py``.
 #
 # The created client is yielded as part of the lifespan context dict,
-# accessible via ``ctx.lifespan_context["client"]`` in tool handlers.
+# accessible via ``get_client(ctx)`` in tool handlers.  The dict always
+# contains the ``"client"`` key (``None`` when keyless) so tools get a
+# fail-loud RuntimeError instead of a KeyError.
 #
 # For test injection, pre-set ``server._oz_client`` before creating
 # ``Client(mcp)`` — the lifespan will pick it up without creating a
 # new one and will NOT close it on shutdown.
+
+
+def get_client(ctx: Any) -> Any:
+    """Return the SDK client from the lifespan context, failing loud.
+
+    Args:
+        ctx: FastMCP request context carrying ``lifespan_context``.
+
+    Returns:
+        The configured ``AsyncOpenZync`` client (or test double).
+
+    Raises:
+        RuntimeError: When no API key was configured and no test client
+            was injected — the lifespan yields ``{"client": None}``.
+    """
+    client = ctx.lifespan_context.get("client")
+    if client is None:
+        raise RuntimeError(
+            "missing OPENZYN_API_KEY — pass --api-key or set OPENZYN_API_KEY env var"
+        )
+    return client
 
 
 @asynccontextmanager
@@ -64,7 +88,7 @@ async def openzync_lifespan(server: FastMCP) -> AsyncIterator[dict[str, Any]]:
         created = True
 
     try:
-        yield {"client": client} if client is not None else {}
+        yield {"client": client}
     finally:
         if created:
             await client.close()
@@ -105,4 +129,4 @@ from openzync_mcp.tools import (  # noqa: F401, E402
     users,
 )
 
-__all__ = ["mcp"]
+__all__ = ["get_client", "mcp"]

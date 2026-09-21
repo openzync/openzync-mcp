@@ -11,7 +11,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.sessions")
 
@@ -54,7 +54,7 @@ async def list_sessions(
         cursor,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         result = await client.sessions.list(
             limit=limit,
@@ -107,6 +107,7 @@ async def get_session_facts(
     ctx: Context,
     session_id: str,
     limit: int = 50,
+    cursor: str | None = None,
 ) -> str:
     """Get facts extracted from messages in a session (newest first).
 
@@ -115,6 +116,8 @@ async def get_session_facts(
     Args:
         session_id: The internal UUID of the session.
         limit: Maximum facts per page (default 50, max 200).
+        cursor: Opaque pagination cursor from a previous response.
+            Omit to fetch the first page.
 
     Returns:
         A formatted string of facts with confidence scores, plus a
@@ -127,15 +130,16 @@ async def get_session_facts(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s session_id=%s limit=%d",
+        "mcp.tool.invoke tool=%s session_id=%s limit=%d cursor=%s",
         "get_session_facts",
         session_id,
         limit,
+        cursor,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
-        response = await client.sessions.facts(session_id, limit=limit)
+        response = await client.sessions.facts(session_id, limit=limit, cursor=cursor)
 
         elapsed = time.monotonic() - start
         logger.info(
@@ -176,12 +180,15 @@ async def get_session_messages(
     ctx: Context,
     session_id: str,
     limit: int = 50,
+    cursor: str | None = None,
 ) -> str:
     """Get the messages (episodes) of a session in order.
 
     Args:
         session_id: The internal UUID of the session.
         limit: Maximum messages per page (default 50, max 200).
+        cursor: Opaque pagination cursor from a previous response.
+            Omit to fetch the first page.
 
     Returns:
         A formatted string listing messages with role and content, plus
@@ -194,15 +201,16 @@ async def get_session_messages(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s session_id=%s limit=%d",
+        "mcp.tool.invoke tool=%s session_id=%s limit=%d cursor=%s",
         "get_session_messages",
         session_id,
         limit,
+        cursor,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
-        response = await client.sessions.messages(session_id, limit=limit)
+        response = await client.sessions.messages(session_id, limit=limit, cursor=cursor)
 
         elapsed = time.monotonic() - start
         logger.info(

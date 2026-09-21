@@ -11,7 +11,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.observations")
 
@@ -58,7 +58,7 @@ async def list_observations(
         limit,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.observations.list(
             subject_entity_id=subject_entity_id,

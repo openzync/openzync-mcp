@@ -10,7 +10,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.search")
 
@@ -48,7 +48,7 @@ async def global_search(
         limit,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.search.global_search(query=query, limit=limit)
 

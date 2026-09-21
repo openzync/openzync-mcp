@@ -14,7 +14,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.memory")
 
@@ -71,7 +71,7 @@ async def add_memory(
         session_id,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.memory.ingest(
             messages=messages,
@@ -134,7 +134,7 @@ async def get_context(
         limit,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.memory.get_context(
             query=query,
@@ -208,7 +208,7 @@ async def search_memory(
         limit,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         results = await client.graph.search(
             query=query,
@@ -284,7 +284,7 @@ async def delete_memory(ctx: Context, confirm: str) -> str:
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s", "delete_memory")
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         await client.memory.delete(confirm=confirm)
         elapsed = time.monotonic() - start

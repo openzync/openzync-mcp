@@ -11,7 +11,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.extractions")
 
@@ -36,7 +36,7 @@ async def list_structured_extractions(ctx: Context, session_id: str) -> str:
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s session_id=%s", "list_structured_extractions", session_id)
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.structured_extractions.list(session_id)
 
@@ -94,7 +94,7 @@ async def get_structured_extraction(ctx: Context, session_id: str, episode_id: s
         episode_id,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         ex = await client.structured_extractions.get_by_episode(session_id, episode_id)
 

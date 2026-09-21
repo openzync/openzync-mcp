@@ -12,7 +12,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.facts")
 
@@ -63,7 +63,7 @@ async def add_fact(
         session_id,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.facts.add(
             facts=facts,
@@ -100,6 +100,7 @@ async def list_facts(
     # fact-list endpoint instead of faking search via graph.search.
     limit: int = 50,
     as_of: str | None = None,
+    offset: int = 0,
 ) -> str:
     """List facts currently valid in your project's knowledge graph.
 
@@ -111,6 +112,8 @@ async def list_facts(
         limit: Maximum facts to return per page (default 50, max 200).
         as_of: Optional effective-at timestamp (ISO-8601) to list facts
             as they were at that point in time.
+        offset: Number of facts to skip (default 0). Pass the ``offset``
+            value from the pagination hint as an int for the next page.
 
     Returns:
         A formatted string of facts with confidence scores, plus a
@@ -118,18 +121,21 @@ async def list_facts(
     """
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
+    if offset < 0:
+        raise ValueError("offset must be >= 0.")
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s limit=%d as_of=%s",
+        "mcp.tool.invoke tool=%s limit=%d as_of=%s offset=%d",
         "list_facts",
         limit,
         as_of,
+        offset,
     )
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
-        response = await client.facts.list(as_of=as_of, limit=limit)
+        response = await client.facts.list(as_of=as_of, limit=limit, offset=offset)
 
         elapsed = time.monotonic() - start
         logger.info(
@@ -149,7 +155,8 @@ async def list_facts(
 
         if response.has_more and response.next_cursor:
             lines.append(
-                f"\nMore facts available. Use offset={response.next_cursor} for the next page."
+                f"\nMore facts available. Use offset={response.next_cursor} (int) "
+                "for the next page."
             )
 
         return "\n".join(lines)
@@ -184,7 +191,7 @@ async def get_fact_history(ctx: Context, fact_id: str) -> str:
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s fact_id=%s", "get_fact_history", fact_id)
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         response = await client.facts.history(fact_id)
 
@@ -252,7 +259,7 @@ async def retract_fact(
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s fact_id=%s", "retract_fact", fact_id)
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         fact = await client.facts.retract(fact_id, reason=reason)
 

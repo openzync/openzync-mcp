@@ -10,7 +10,7 @@ import time
 
 from fastmcp import Context
 
-from openzync_mcp.server import mcp
+from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.users")
 
@@ -47,7 +47,7 @@ async def create_user(
     start = time.monotonic()
     logger.info("mcp.tool.invoke tool=%s external_id=%s name=%s", "create_user", external_id, name)
 
-    client = ctx.lifespan_context["client"]
+    client = get_client(ctx)
     try:
         user = await client.users.create(
             external_id=external_id,
