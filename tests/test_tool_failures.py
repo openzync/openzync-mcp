@@ -22,7 +22,7 @@ TOOL_FAILURES = [
     ),
     ("get_context", {"query": "ml"}, "memory.get_context"),
     ("search_memory", {"query": "ml"}, "graph.search"),
-    ("delete_memory", {}, "memory.delete"),
+    ("delete_memory", {"confirm": "proj-123"}, "memory.delete"),
     ("get_user_graph", {}, "graph.nodes"),
     (
         "add_fact",
@@ -33,6 +33,7 @@ TOOL_FAILURES = [
         "facts.add",
     ),
     ("list_facts", {}, "facts.list"),
+    ("list_facts", {"offset": 25}, "facts.list"),
     ("list_sessions", {}, "sessions.list"),
     ("create_user", {"external_id": "ext-1"}, "users.create"),
     ("get_fact_history", {"fact_id": "f1"}, "facts.history"),
@@ -62,8 +63,11 @@ TOOL_FAILURES = [
 
 
 @pytest.mark.parametrize(("tool", "args", "mock_path"), TOOL_FAILURES)
-async def test_sdk_failure_propagates(mcp_client, mock_client, tool, args, mock_path) -> None:
+async def test_sdk_failure_propagates(mcp_client, mock_client, monkeypatch, tool, args, mock_path) -> None:
     """A failing SDK call must raise ToolError, never a silent fallback."""
+    # delete_memory is allowlist-gated before the SDK call — enable it so
+    # the failure entry exercises SDK-error propagation, not the gate.
+    monkeypatch.setenv("OPENZYN_MCP_ALLOW_WIPE", "true")
     target = mock_client
     for part in mock_path.split("."):
         target = getattr(target, part)

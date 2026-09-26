@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastmcp.client import Client
+from fastmcp.exceptions import ToolError
 
 from openzync_mcp import server
 
@@ -51,13 +52,25 @@ async def test_lifespan_creates_and_closes_real_client(monkeypatch, fake_openzyn
 
 
 async def test_lifespan_no_key_no_client(monkeypatch, fake_openzync) -> None:
-    """Without an API key and without injection, no client is created."""
+    """Without an API key and without injection, the client stays None (fail-loud)."""
     monkeypatch.delenv("OPENZYN_API_KEY", raising=False)
     monkeypatch.delenv("OPENZYN_BASE_URL", raising=False)
     monkeypatch.delattr(server.mcp, "_oz_client", raising=False)
     calls, instances = fake_openzync
-    async with Client(server.mcp):
+
+    # Lifespan always yields the "client" key (None when keyless) — never KeyError.
+    async with server.openzync_lifespan(server.mcp) as ctx:
+        assert list(ctx.keys()) == ["client"]
+        assert ctx["client"] is None
+
+    async with Client(server.mcp) as client:
         pass
 
     assert calls == []
     assert instances == []
+
+    # Invoking a tool keyless raises ToolError wrapping the fail-loud RuntimeError.
+    monkeypatch.delattr(server.mcp, "_oz_client", raising=False)
+    async with Client(server.mcp) as client:
+        with pytest.raises(ToolError, match="OPENZYN_API_KEY"):
+            await client.call_tool("list_facts", {})

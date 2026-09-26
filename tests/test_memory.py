@@ -103,10 +103,12 @@ async def test_search_memory_validation(mcp_client) -> None:
         await mcp_client.call_tool("search_memory", {"query": "ml", "limit": 0})
 
 
-async def test_delete_memory_success(mcp_client, mock_client) -> None:
-    result = await mcp_client.call_tool("delete_memory", {})
+async def test_delete_memory_success(mcp_client, mock_client, monkeypatch) -> None:
+    monkeypatch.setenv("OPENZYN_MCP_ALLOW_WIPE", "true")
 
-    mock_client.memory.delete.assert_awaited_once_with()
+    result = await mcp_client.call_tool("delete_memory", {"confirm": "proj-123"})
+
+    mock_client.memory.delete.assert_awaited_once_with(confirm="proj-123")
     assert result.content[0].text == "Memory deleted successfully."
 
 

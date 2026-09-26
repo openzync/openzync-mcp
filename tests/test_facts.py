@@ -91,7 +91,7 @@ async def test_list_facts_success(mcp_client, mock_client) -> None:
 
     result = await mcp_client.call_tool("list_facts", {"limit": 10})
 
-    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10)
+    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10, offset=0)
     text = result.content[0].text
     assert "Found 2 fact(s):" in text
     assert "[0.90] Alice works at OpenZync" in text
@@ -103,7 +103,9 @@ async def test_list_facts_as_of_passthrough(mcp_client, mock_client) -> None:
 
     await mcp_client.call_tool("list_facts", {"as_of": "2026-01-01T00:00:00Z"})
 
-    mock_client.facts.list.assert_awaited_once_with(as_of="2026-01-01T00:00:00Z", limit=50)
+    mock_client.facts.list.assert_awaited_once_with(
+        as_of="2026-01-01T00:00:00Z", limit=50, offset=0
+    )
 
 
 async def test_list_facts_pagination_hint(mcp_client, mock_client) -> None:
@@ -115,7 +117,7 @@ async def test_list_facts_pagination_hint(mcp_client, mock_client) -> None:
 
     result = await mcp_client.call_tool("list_facts", {})
 
-    assert "Use offset=50 for the next page." in result.content[0].text
+    assert "Use offset=50 (int) for the next page." in result.content[0].text
 
 
 async def test_list_facts_no_results(mcp_client, mock_client) -> None:
@@ -133,7 +135,19 @@ async def test_list_facts_validation(mcp_client, mock_client) -> None:
     with pytest.raises(ToolError, match="limit must be between 1 and 200."):
         await mcp_client.call_tool("list_facts", {"limit": 201})
 
+    with pytest.raises(ToolError, match=r"offset must be >= 0\."):
+        await mcp_client.call_tool("list_facts", {"offset": -1})
+
     mock_client.facts.list.assert_not_called()
+
+
+async def test_list_facts_offset_forwarding(mcp_client, mock_client) -> None:
+    """offset=25 reaches the SDK verbatim (round-trip)."""
+    mock_client.facts.list.return_value = PaginatedFactsResponse(data=[], has_more=False)
+
+    await mcp_client.call_tool("list_facts", {"limit": 10, "offset": 25})
+
+    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10, offset=25)
 
 
 async def test_get_fact_history_success(mcp_client, mock_client) -> None:
