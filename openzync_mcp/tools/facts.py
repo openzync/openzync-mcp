@@ -101,6 +101,7 @@ async def list_facts(
     limit: int = 50,
     as_of: str | None = None,
     offset: int = 0,
+    cursor: str | None = None,
 ) -> str:
     """List facts currently valid in your project's knowledge graph.
 
@@ -112,8 +113,9 @@ async def list_facts(
         limit: Maximum facts to return per page (default 50, max 200).
         as_of: Optional effective-at timestamp (ISO-8601) to list facts
             as they were at that point in time.
-        offset: Number of facts to skip (default 0). Pass the ``offset``
-            value from the pagination hint as an int for the next page.
+        offset: Number of facts to skip (default 0). Ignored when
+            ``cursor`` is set.
+        cursor: Opaque cursor from a previous response for the next page.
 
     Returns:
         A formatted string of facts with confidence scores, plus a
@@ -126,16 +128,19 @@ async def list_facts(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s limit=%d as_of=%s offset=%d",
+        "mcp.tool.invoke tool=%s limit=%d as_of=%s offset=%d cursor=%s",
         "list_facts",
         limit,
         as_of,
         offset,
+        cursor,
     )
 
     client = get_client(ctx)
     try:
-        response = await client.facts.list(as_of=as_of, limit=limit, offset=offset)
+        response = await client.facts.list(
+            as_of=as_of, limit=limit, offset=offset, cursor=cursor
+        )
 
         elapsed = time.monotonic() - start
         logger.info(
@@ -155,7 +160,7 @@ async def list_facts(
 
         if response.has_more and response.next_cursor:
             lines.append(
-                f"\nMore facts available. Use offset={response.next_cursor} (int) "
+                f'\nMore facts available. Use cursor="{response.next_cursor}" '
                 "for the next page."
             )
 

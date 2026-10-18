@@ -61,6 +61,11 @@ async def list_sessions(
             cursor=cursor,
         )
 
+        # SDK list() returns SessionListResponse (BREAKING: was bare dict).
+        # Normalize to a plain dict so the formatting below is unchanged.
+        if not isinstance(result, dict):
+            result = result.model_dump(mode="json")
+
         sessions = result.get("data", result.get("items", []))
         next_cursor = result.get("next_cursor")
         has_more = result.get("has_more", False)

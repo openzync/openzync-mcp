@@ -21,6 +21,10 @@ logger = logging.getLogger("openzync.mcp.tools.graph")
 # Beyond this threshold, we only show entity summaries without edges.
 _MAX_EDGE_SOURCES = 20
 
+# Timeout for the parallel edge fan-out as a whole — one slow entity must
+# not make the tool wait for the slowest call on every invocation.
+_EDGE_FANOUT_TIMEOUT_S = 10.0
+
 
 @mcp.tool
 async def get_user_graph(
@@ -89,19 +93,37 @@ async def get_user_graph(
 
         # ── Collect edges for all entities in parallel ────────────────────
         # Cap source count to avoid overwhelming the API. Use
-        # return_exceptions so a single timeout doesn't lose all edges.
+        # return_exceptions so a single failure doesn't lose all edges,
+        # and bound the whole fan-out with a timeout so one slow entity
+        # doesn't stall the tool — a timeout fails loud (no silent
+        # partial), since partial edges would mislead the caller.
         source_entities = entities[:_MAX_EDGE_SOURCES]
 
-        edge_results = await asyncio.gather(
-            *[
-                client.graph.edges(
-                    subject_id=e["id"],
-                    limit=limit,
-                )
-                for e in source_entities
-            ],
-            return_exceptions=True,
-        )
+        try:
+            edge_results = await asyncio.wait_for(
+                asyncio.gather(
+                    *[
+                        client.graph.edges(
+                            subject_id=e["id"],
+                            limit=limit,
+                        )
+                        for e in source_entities
+                    ],
+                    return_exceptions=True,
+                ),
+                timeout=_EDGE_FANOUT_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "mcp.tool.timeout tool=get_user_graph sources=%d timeout_s=%s",
+                len(source_entities),
+                _EDGE_FANOUT_TIMEOUT_S,
+            )
+            raise RuntimeError(
+                f"get_user_graph edge fan-out timed out after "
+                f"{_EDGE_FANOUT_TIMEOUT_S:g}s for {len(source_entities)} "
+                f"entities — retry with a narrower entity_type."
+            ) from None
 
         edges: list[dict[str, Any]] = []
         seen_pairs: set[tuple[str, str, str]] = set()  # dedup (source, target, type)
