@@ -58,12 +58,14 @@ TOOL_FAILURES = [
         {"session_id": "s1", "episode_id": "e1"},
         "structured_extractions.get_by_episode",
     ),
-    ("update_project_member", {"user_id": "u1"}, "projects.update_member"),
+    ("update_project_member", {"user_id": "u1", "role": "member"}, "projects.update_member"),
 ]
 
 
 @pytest.mark.parametrize(("tool", "args", "mock_path"), TOOL_FAILURES)
-async def test_sdk_failure_propagates(mcp_client, mock_client, monkeypatch, tool, args, mock_path) -> None:
+async def test_sdk_failure_propagates(
+    mcp_client, mock_client, monkeypatch, tool, args, mock_path
+) -> None:
     """A failing SDK call must raise ToolError, never a silent fallback."""
     # delete_memory is allowlist-gated before the SDK call — enable it so
     # the failure entry exercises SDK-error propagation, not the gate.

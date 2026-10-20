@@ -23,6 +23,8 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from openzync_mcp._config import DEFAULT_BASE_URL, validate_base_url
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Lifespan — create the SDK client on server startup, close on shutdown
 # ═══════════════════════════════════════════════════════════════════════════
@@ -56,9 +58,7 @@ def get_client(ctx: Any) -> Any:
     """
     client = ctx.lifespan_context.get("client")
     if client is None:
-        raise RuntimeError(
-            "missing OPENZYN_API_KEY — pass --api-key or set OPENZYN_API_KEY env var"
-        )
+        raise RuntimeError("missing OPENZYN_API_KEY — set the OPENZYN_API_KEY env var")
     return client
 
 
@@ -69,12 +69,19 @@ async def openzync_lifespan(server: FastMCP) -> AsyncIterator[dict[str, Any]]:
     Reads ``OPENZYN_API_KEY`` and ``OPENZYN_BASE_URL`` from the environment
     (set by ``__main__.py`` before ``mcp.run()``).
 
+    The base URL is validated before the client is built: the API key is
+    sent as a bearer token on every request, so a base URL pointing at
+    the wrong host is a credential leak, not a typo.  A rejected URL
+    raises here and the server refuses to start.
+
     For test injection, pre-set ``server._oz_client`` with a mock client
     before creating ``Client(mcp)``.  The lifespan will use it as-is and
     will NOT close it on shutdown (test fixtures own the lifecycle).
     """
     api_key = os.environ.get("OPENZYN_API_KEY", "")
-    base_url = os.environ.get("OPENZYN_BASE_URL", "http://localhost:8000")
+    base_url = os.environ.get("OPENZYN_BASE_URL", DEFAULT_BASE_URL)
+
+    validate_base_url(base_url)
 
     # Allow pre-set client for test injection
     client: Any = getattr(server, "_oz_client", None)

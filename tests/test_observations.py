@@ -11,11 +11,14 @@ from openzync.models.observation import ObservationListResponse, ObservationResp
 def make_observation(**overrides) -> ObservationResponse:
     defaults = {
         "id": "obs-1",
+        "organization_id": "org-1",
+        "project_id": "proj-1",
         "subject_entity_id": "ent-1",
         "observation_type": "co_occurrence",
         "content": "Alice and Bob frequently co-occur.",
         "confidence": 0.8,
         "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z",
     }
     return ObservationResponse(**(defaults | overrides))
 

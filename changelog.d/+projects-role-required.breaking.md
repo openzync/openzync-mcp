@@ -1,0 +1,1 @@
+**BREAKING:** `update_project_member` now requires the `role` argument — it used to default to `"member"`, so a call that omitted it silently demoted a project owner to member and reported success. The tool now fails with a validation error instead.

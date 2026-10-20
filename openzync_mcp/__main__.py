@@ -13,7 +13,9 @@ and transport negotiation automatically — no custom JSON-RPC dispatch needed.
 
 The SDK client is created during the FastMCP lifespan, which reads the
 ``OPENZYN_API_KEY`` and ``OPENZYN_BASE_URL`` environment variables.
-This entry point sets them from CLI arguments before starting the server.
+The API key is read from the environment only — it is never accepted as
+a command-line argument, because argv is world-readable in ``ps`` output
+and lands in shell history.
 """
 
 from __future__ import annotations
@@ -22,6 +24,8 @@ import argparse
 import logging
 import os
 import sys
+
+from openzync_mcp._config import DEFAULT_BASE_URL, validate_base_url
 
 
 def main() -> None:
@@ -36,12 +40,8 @@ def main() -> None:
     parser.add_argument("--host", default="0.0.0.0", help="Server bind host")  # noqa: S104 — intentional for server
     parser.add_argument("--port", type=int, default=8100, help="Server port")
     parser.add_argument(
-        "--api-key",
-        help="OpenZync API key (default: OPENZYN_API_KEY env var)",
-    )
-    parser.add_argument(
         "--base-url",
-        default=os.environ.get("OPENZYN_BASE_URL", "http://localhost:8000"),
+        default=os.environ.get("OPENZYN_BASE_URL", DEFAULT_BASE_URL),
         help="OpenZync API base URL (default: $OPENZYN_BASE_URL or http://localhost:8000)",
     )
     args = parser.parse_args()
@@ -54,15 +54,18 @@ def main() -> None:
     )
     logger = logging.getLogger("openzync.mcp")
 
-    api_key = args.api_key or os.environ.get("OPENZYN_API_KEY")
+    api_key = os.environ.get("OPENZYN_API_KEY")
     if not api_key:
-        logger.error(
-            "API key is required.  Pass --api-key or set the OPENZYN_API_KEY environment variable."
-        )
+        logger.error("API key is required.  Set the OPENZYN_API_KEY environment variable.")
         sys.exit(1)
 
-    # Set environment variables for the FastMCP lifespan to read.
-    os.environ["OPENZYN_API_KEY"] = api_key
+    try:
+        validate_base_url(args.base_url)
+    except ValueError as exc:
+        logger.error("Invalid OpenZync base URL: %s", exc)
+        sys.exit(1)
+
+    # The lifespan reads both values from the environment.
     os.environ["OPENZYN_BASE_URL"] = args.base_url
 
     # Import the FastMCP server (triggers tool registration).

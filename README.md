@@ -68,6 +68,38 @@ export OPENZYN_BASE_URL="http://localhost:8000"  # or your OpenZync deployment
 python -m openzync_mcp --transport stdio
 ```
 
+The API key is read from `OPENZYN_API_KEY` only — it is never accepted as a
+command-line argument, because argv is world-readable in `ps` output and lands
+in shell history.
+
+#### Base URL rules
+
+`OPENZYN_BASE_URL` (or `--base-url`) decides where the API key is sent: the
+key travels in an `Authorization: Bearer` header on every request. The server
+therefore validates the URL at startup and refuses to start on a bad one.
+
+| Base URL | Result |
+|---|---|
+| `http://localhost:8000` | Accepted — the local default |
+| `http://127.0.0.1:8000` (any address in `127.0.0.0/8`), `http://[::1]:8000` | Accepted — loopback |
+| `https://<host>` | Accepted |
+| `http://<host>` (non-loopback) | Rejected — use `https://` |
+| Host not in `OPENZYN_MCP_ALLOWED_HOSTS` (when set) | Rejected |
+
+"Loopback" means the `localhost` name or an IP literal in the
+`127.0.0.0/8` range or `::1` — the host is parsed as an IP address, so a
+name that merely starts with `127.` (e.g. `127.attacker.test`) is a
+regular remote host and needs `https://`.
+
+`OPENZYN_MCP_ALLOWED_HOSTS` is an optional comma-separated host allowlist.
+When set, only those hosts are accepted. Listing a host also opts it into
+plain `http://` (with a loud warning) — use it for a trusted internal
+deployment:
+
+```bash
+export OPENZYN_MCP_ALLOWED_HOSTS="openzync.internal,app.openzync.tech"
+```
+
 ### Docker
 
 ```bash

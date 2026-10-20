@@ -35,7 +35,9 @@ def fake_openzync(monkeypatch) -> Iterator[tuple[list, list]]:
 
 async def test_lifespan_creates_and_closes_real_client(monkeypatch, fake_openzync) -> None:
     monkeypatch.setenv("OPENZYN_API_KEY", "test-key-123")
-    monkeypatch.setenv("OPENZYN_BASE_URL", "http://fake:9000")
+    # https:// — plain http:// to a non-loopback host is rejected at startup
+    # (the API key travels as a bearer token on every request).
+    monkeypatch.setenv("OPENZYN_BASE_URL", "https://fake:9000")
     monkeypatch.delattr(server.mcp, "_oz_client", raising=False)
 
     calls, instances = fake_openzync
@@ -43,7 +45,7 @@ async def test_lifespan_creates_and_closes_real_client(monkeypatch, fake_openzyn
         pass
 
     # Constructed once with exactly the env values.
-    assert calls == [("test-key-123", "http://fake:9000")]
+    assert calls == [("test-key-123", "https://fake:9000")]
     assert len(instances) == 1
     # Owned by the lifespan — it must close the real client on shutdown.
     instances[0].close.assert_awaited_once()

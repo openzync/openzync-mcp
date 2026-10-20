@@ -9,12 +9,36 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import UTC, datetime
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
 
 logger = logging.getLogger("openzync.mcp.tools.facts")
+
+
+def _iso(value: datetime | None) -> str:
+    """Render a timestamp as an RFC-3339 string (UTC as ``Z``).
+
+    The SDK models type temporal fields as ``datetime``.  Interpolating one
+    straight into a tool's text emits Python's ``str()`` form
+    (``2026-02-01 00:00:00+00:00``) — a shape no other OpenZync surface
+    emits, so an agent parsing RFC-3339 fails on it.
+
+    Args:
+        value: The timestamp to render, or ``None``.
+
+    Returns:
+        An RFC-3339 timestamp, or ``""`` when ``value`` is ``None``.
+    """
+    if value is None:
+        return ""
+    if value.tzinfo is None:
+        # Backend timestamps are UTC (per the SDK model docstrings); a
+        # naive value would render without an offset, which is not RFC-3339.
+        value = value.replace(tzinfo=UTC)
+    return value.isoformat().replace("+00:00", "Z")
 
 
 @mcp.tool
@@ -138,9 +162,7 @@ async def list_facts(
 
     client = get_client(ctx)
     try:
-        response = await client.facts.list(
-            as_of=as_of, limit=limit, offset=offset, cursor=cursor
-        )
+        response = await client.facts.list(as_of=as_of, limit=limit, offset=offset, cursor=cursor)
 
         elapsed = time.monotonic() - start
         logger.info(
@@ -160,8 +182,7 @@ async def list_facts(
 
         if response.has_more and response.next_cursor:
             lines.append(
-                f'\nMore facts available. Use cursor="{response.next_cursor}" '
-                "for the next page."
+                f'\nMore facts available. Use cursor="{response.next_cursor}" for the next page.'
             )
 
         return "\n".join(lines)
@@ -212,8 +233,8 @@ async def get_fact_history(ctx: Context, fact_id: str) -> str:
             f"Fact {fact_id}:",
             f"  Content: {response.fact.content}",
             f"  Confidence: {response.fact.confidence:.2f}",
-            f"  Valid from: {response.fact.valid_from or 'unknown'}",
-            f"  Invalid at: {response.fact.invalid_at or '—'}",
+            f"  Valid from: {_iso(response.fact.valid_from) or 'unknown'}",
+            f"  Invalid at: {_iso(response.fact.invalid_at) or '—'}",
         ]
 
         if not response.events:
@@ -274,13 +295,13 @@ async def retract_fact(
             "retract_fact",
             round(elapsed * 1000),
             fact.id,
-            fact.invalid_at,
+            _iso(fact.invalid_at),
         )
         return (
             f"Fact retracted.\n"
             f"  ID: {fact.id}\n"
             f"  Content: {fact.content}\n"
-            f"  Invalid at: {fact.invalid_at or 'already closed'}"
+            f"  Invalid at: {_iso(fact.invalid_at) or 'already closed'}"
         )
     except Exception:
         elapsed = time.monotonic() - start

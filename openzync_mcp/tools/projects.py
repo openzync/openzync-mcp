@@ -21,7 +21,7 @@ _ALLOWED_ROLES = {"owner", "member"}
 async def update_project_member(
     ctx: Context,
     user_id: str,
-    role: str = "member",
+    role: str,
 ) -> str:
     """Change a member's role within your project.
 
@@ -30,7 +30,9 @@ async def update_project_member(
 
     Args:
         user_id: The UUID of the user whose role to change.
-        role: New project role (``"owner"`` or ``"member"``).
+        role: New project role (``"owner"`` or ``"member"``).  Required —
+            there is no default, because defaulting to ``"member"`` silently
+            demoted an owner when the caller meant to change nothing.
 
     Returns:
         A confirmation message with the updated membership.

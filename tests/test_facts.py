@@ -91,7 +91,7 @@ async def test_list_facts_success(mcp_client, mock_client) -> None:
 
     result = await mcp_client.call_tool("list_facts", {"limit": 10})
 
-    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10, offset=0)
+    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10, offset=0, cursor=None)
     text = result.content[0].text
     assert "Found 2 fact(s):" in text
     assert "[0.90] Alice works at OpenZync" in text
@@ -104,7 +104,7 @@ async def test_list_facts_as_of_passthrough(mcp_client, mock_client) -> None:
     await mcp_client.call_tool("list_facts", {"as_of": "2026-01-01T00:00:00Z"})
 
     mock_client.facts.list.assert_awaited_once_with(
-        as_of="2026-01-01T00:00:00Z", limit=50, offset=0
+        as_of="2026-01-01T00:00:00Z", limit=50, offset=0, cursor=None
     )
 
 
@@ -117,7 +117,10 @@ async def test_list_facts_pagination_hint(mcp_client, mock_client) -> None:
 
     result = await mcp_client.call_tool("list_facts", {})
 
-    assert "Use offset=50 (int) for the next page." in result.content[0].text
+    text = result.content[0].text
+    assert 'Use cursor="50"' in text
+    # The old offset-based hint is gone — cursor pagination replaced it.
+    assert "offset=50" not in text
 
 
 async def test_list_facts_no_results(mcp_client, mock_client) -> None:
@@ -147,7 +150,7 @@ async def test_list_facts_offset_forwarding(mcp_client, mock_client) -> None:
 
     await mcp_client.call_tool("list_facts", {"limit": 10, "offset": 25})
 
-    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10, offset=25)
+    mock_client.facts.list.assert_awaited_once_with(as_of=None, limit=10, offset=25, cursor=None)
 
 
 async def test_get_fact_history_success(mcp_client, mock_client) -> None:

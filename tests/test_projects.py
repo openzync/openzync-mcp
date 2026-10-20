@@ -33,17 +33,35 @@ async def test_update_project_member_success(mcp_client, mock_client) -> None:
     assert "Role: owner" in text
 
 
-async def test_update_project_member_default_role(mcp_client, mock_client) -> None:
+async def test_update_project_member_role_required(mcp_client, mock_client) -> None:
+    """``role`` is required — there is no default.
+
+    The old default (``"member"``) silently demoted a project OWNER when
+    the caller meant to change nothing, so the parameter must be supplied
+    explicitly.
+    """
     mock_client.projects.update_member.return_value = make_member(role="member")
 
-    await mcp_client.call_tool("update_project_member", {"user_id": "user-uuid-1"})
+    with pytest.raises(ToolError, match="Missing required argument") as exc_info:
+        await mcp_client.call_tool("update_project_member", {"user_id": "user-uuid-1"})
+    assert "role" in str(exc_info.value)
 
-    mock_client.projects.update_member.assert_awaited_once_with("user-uuid-1", role="member")
+    # No silent default is invented and the SDK is never reached.
+    mock_client.projects.update_member.assert_not_called()
+
+    # An explicit role is forwarded verbatim.
+    mock_client.projects.update_member.return_value = make_member(role="owner")
+    result = await mcp_client.call_tool(
+        "update_project_member", {"user_id": "user-uuid-1", "role": "owner"}
+    )
+
+    mock_client.projects.update_member.assert_awaited_once_with("user-uuid-1", role="owner")
+    assert "Role: owner" in result.content[0].text
 
 
 async def test_update_project_member_validation(mcp_client, mock_client) -> None:
     with pytest.raises(ToolError, match="user_id must be a non-empty string."):
-        await mcp_client.call_tool("update_project_member", {"user_id": ""})
+        await mcp_client.call_tool("update_project_member", {"user_id": "", "role": "member"})
 
     with pytest.raises(ToolError, match="Invalid role: admin."):
         await mcp_client.call_tool(

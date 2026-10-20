@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from unittest.mock import MagicMock
 
 import pytest
@@ -57,16 +58,26 @@ def test_run_http_dispatch(monkeypatch) -> None:
     fake_run.assert_called_once_with(transport="http", host="0.0.0.0", port=8200)
 
 
-def test_api_key_from_flag(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "sys.argv", ["openzync_mcp", "--transport", "stdio", "--api-key", "flag-key"]
-    )
+def test_api_key_from_env(monkeypatch) -> None:
+    """The API key is read from OPENZYN_API_KEY — never from a CLI flag."""
+    monkeypatch.setattr("sys.argv", ["openzync_mcp", "--transport", "stdio"])
+    monkeypatch.setenv("OPENZYN_API_KEY", "env-key")
     fake_run = _patch_run(monkeypatch)
 
     entry.main()
 
-    fake_run.assert_called_once()
-    # main() must propagate the flag value into the env the lifespan reads.
-    import os
+    fake_run.assert_called_once_with()
+    # main() reads the key from the env and leaves it in place for the lifespan.
+    assert os.environ["OPENZYN_API_KEY"] == "env-key"
 
-    assert os.environ["OPENZYN_API_KEY"] == "flag-key"
+
+def test_api_key_flag_removed(monkeypatch) -> None:
+    """``--api-key`` was removed — argv is world-readable in ``ps`` output."""
+    monkeypatch.setattr("sys.argv", ["openzync_mcp", "--api-key", "flag-key"])
+
+    with pytest.raises(SystemExit) as exc_info:
+        entry.main()
+
+    # argparse rejects the unknown option (exit code 2) — the flag cannot be
+    # used to inject a credential.
+    assert exc_info.value.code == 2
