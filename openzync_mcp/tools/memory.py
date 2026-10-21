@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+import uuid
 
 from fastmcp import Context
 
@@ -39,6 +40,7 @@ async def add_memory(
     # project from the API key; the param was never used.
     messages: list[dict],
     session_id: str,
+    idempotency_key: str | None = None,
 ) -> str:
     """Add messages to your project's memory.
 
@@ -54,6 +56,10 @@ async def add_memory(
             required, maximum 1000.
         session_id: Session external ID — required, all ingestion targets
             an existing session.
+        idempotency_key: Optional key for safe caller-level retries — pass
+            the same key when retrying a timed-out or ambiguous call. When
+            omitted a fresh key is generated per call: transport retries of
+            this call reuse it, but a new tool call is a new episode.
 
     Returns:
         A confirmation message with the job ID and episode count.
@@ -73,9 +79,13 @@ async def add_memory(
 
     client = get_client(ctx)
     try:
+        # One key per call, reused across this call's transport retries —
+        # pass idempotency_key explicitly to dedupe caller-level retries.
+        new_uuid = getattr(uuid, "uuid7", None) or uuid.uuid4
         response = await client.memory.ingest(
             messages=messages,
             session_id=session_id,
+            idempotency_key=idempotency_key or new_uuid().hex,
         )
         elapsed = time.monotonic() - start
         logger.info(
