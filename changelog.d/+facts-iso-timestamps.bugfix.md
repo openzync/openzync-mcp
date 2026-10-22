@@ -1,1 +1,0 @@
-Emit fact timestamps as RFC-3339 (`2026-02-01T00:00:00Z`) instead of Python's `str(datetime)` form (`2026-02-01 00:00:00+00:00`), so `get_fact_history` and `retract_fact` speak the same timestamp format as every other OpenZync surface.

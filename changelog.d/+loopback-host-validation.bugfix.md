@@ -1,1 +1,0 @@
-Parse the base-URL host as an IP address when deciding whether plain `http://` is allowed, instead of matching the string prefix `127.`. A host such as `http://127.attacker.test` was previously accepted as "loopback", so the `OPENZYN_API_KEY` bearer token was sent to it in cleartext. `localhost`, the `127.0.0.0/8` range and `::1` are still accepted.
