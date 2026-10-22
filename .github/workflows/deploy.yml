@@ -121,6 +121,21 @@ jobs:
           docker tag ghcr.io/openzync/openzync-mcp:$TAG ghcr.io/openzync/openzync-mcp:latest
           docker push --all-tags ghcr.io/openzync/openzync-mcp
 
+      - name: Preflight — ensure shared network exists
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          HOST="${{ secrets.VPS_HOST }}"
+          USER="${{ secrets.VPS_USER }}"
+
+          ssh -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "${USER}@${HOST}" "docker network inspect openzync_network >/dev/null 2>&1 || docker network create --driver bridge --subnet 172.28.0.0/24 openzync_network"
+
       - name: Upload deployment files to VPS
         shell: bash
         run: |

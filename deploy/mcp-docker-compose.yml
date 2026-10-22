@@ -22,3 +22,8 @@ services:
     ports:
       - "127.0.0.1:8100:8100"
     restart: unless-stopped
+
+networks:
+  default:
+    name: openzync_network
+    external: true # attach-only; creation owned by the backend flow; keeps mcp off the implicit deploy_default.
