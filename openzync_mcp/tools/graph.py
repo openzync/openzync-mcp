@@ -68,11 +68,15 @@ async def get_user_graph(
     client = get_client(ctx)
     try:
         # ── Collect entities ──────────────────────────────────────────────
+        # NOTE: SDK `limit` is the page size — the iterator auto-fetches
+        # all pages, so break once we have enough and close the iterator
+        # to avoid extra HTTP round-trips on large graphs.
         entities: list[dict[str, Any]] = []
-        async for node in await client.graph.nodes(
+        nodes_iter = await client.graph.nodes(
             entity_type=entity_type,
             limit=limit,
-        ):
+        )
+        async for node in nodes_iter:
             entities.append(
                 {
                     "id": str(node.id),
@@ -81,6 +85,12 @@ async def get_user_graph(
                     "summary": node.summary,
                 }
             )
+            if len(entities) >= limit:
+                break
+        aclose = getattr(nodes_iter, "aclose", None)
+        if aclose is not None:
+            await aclose()
+        entities = entities[:limit]
 
         if not entities:
             elapsed = time.monotonic() - start

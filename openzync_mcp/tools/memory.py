@@ -240,7 +240,7 @@ async def search_memory(
         lines = [f"Found {len(results)} result(s):"]
         for r in results[:limit]:
             content = (r.get("content") or "")[:200]
-            score = r.get("rrf_score", r.get("score", 0))
+            score = r.get("rrf_score") or r.get("score") or 0.0
             lines.append(f"  [{score:.4f}] {content}")
 
         return "\n".join(lines)
