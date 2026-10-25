@@ -53,6 +53,13 @@ packages = ["openzync_mcp"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Coverage gate lives here (not the Makefile) so every `pytest` invocation
+# — local runs and CI alike — enforces it.
+addopts = [
+  "--cov=openzync_mcp",
+  "--cov-report=term",
+  "--cov-fail-under=80",
+]
 
 [tool.coverage.run]
 omit = ["tests/*"]

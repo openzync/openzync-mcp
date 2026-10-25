@@ -44,10 +44,7 @@ test:
 	pytest tests/ -v $(ARGS)
 
 test-coverage:
-	pytest tests/ -v \
-		--cov=openzync_mcp \
-		--cov-report=term --cov-report=xml \
-		--cov-fail-under=80 $(ARGS)
+	pytest tests/ -v --cov-report=xml $(ARGS)
 
 # ── Changelog (towncrier) ─────────────────────────────────────────────────────
 

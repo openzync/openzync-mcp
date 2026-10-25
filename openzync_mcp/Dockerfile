@@ -33,10 +33,11 @@ WORKDIR /app
 # Copy installed packages from builder.
 COPY --from=builder /root/.local /root/.local
 
-# Copy application source.
-# ⚠️ SECRET RISK: this also copies .env (real API keys), .venv and .git — all
-# excluded by the repo-root .dockerignore (same pattern as openzync-core).
-COPY . .
+# Copy application source — explicit allowlist only (never `COPY . .`:
+# a broad copy would bake .env secrets, .venv, or .git into the image
+# if .dockerignore ever regresses).
+COPY pyproject.toml README.md ./
+COPY openzync_mcp/ ./openzync_mcp/
 
 # Ensure ~/.local/bin (where pip --user installs scripts) is on PATH.
 ENV PATH=/root/.local/bin:$PATH \
