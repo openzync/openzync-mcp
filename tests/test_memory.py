@@ -19,8 +19,9 @@ async def test_add_memory_success(mcp_client, mock_client) -> None:
         },
     )
 
+    from unittest.mock import ANY
     mock_client.memory.ingest.assert_awaited_once_with(
-        messages=[{"role": "user", "content": "hello"}], session_id="session-1"
+        messages=[{"role": "user", "content": "hello"}], session_id="session-1", idempotency_key=ANY
     )
     text = result.content[0].text
     assert "2 messages ingested" in text
