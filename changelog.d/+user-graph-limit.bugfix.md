@@ -1,0 +1,1 @@
+Fix `get_user_graph` to honor `limit` by breaking pagination, closing the async client, and truncating buffered facts; fix `search_memory` crash when a fact has a null score by treating it as zero in ranking and sort.
