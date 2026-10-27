@@ -136,4 +136,20 @@ from openzync_mcp.tools import (  # noqa: F401, E402
     users,
 )
 
-__all__ = ["get_client", "mcp"]
+
+@mcp.custom_route("/health", methods=["GET"], include_in_schema=False)
+async def health_check(request: object) -> object:
+    """Liveness probe for container orchestrators (Docker/K8s).
+
+    Plain Starlette route alongside the MCP transports — a GET returns
+    200 without touching the MCP protocol (no Accept negotiation, no
+    auth), so HTTP HEALTHCHECK / readiness probes can use it instead
+    of a TCP connect.  Never checks downstream (core API reachability
+    is the SDK call's job); liveness-only by design.
+    """
+    from starlette.responses import JSONResponse  # noqa: PLC0415
+
+    return JSONResponse({"status": "ok", "service": "openzync-mcp"})
+
+
+__all__ = ["get_client", "health_check", "mcp"]
