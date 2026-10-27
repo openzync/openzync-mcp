@@ -46,12 +46,12 @@ ENV PATH=/root/.local/bin:$PATH \
 
 EXPOSE 8100
 
-# TCP probe, not HTTP: a bare GET /mcp returns 406 (Streamable HTTP requires
-# Accept: application/json, text/event-stream), so an HTTP probe would mark a
-# healthy container unhealthy. A socket connect only checks the port is up.
-# # note: a real /health route would be the fuller fix — TCP is the lazy correct one.
+# Real HTTP probe: GET /health is a plain Starlette route registered via
+# mcp.custom_route in server.py (include_in_schema=False) — no MCP Accept
+# negotiation, no auth, 200 when the process serves.  Liveness-only:
+# downstream core-API health is the SDK call's job, not the probe's.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-    CMD python3 -c "import socket; socket.create_connection(('127.0.0.1', 8100), 5).close()" || exit 1
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=4)" || exit 1
 
 # The MCP server requires OPENZYN_API_KEY to be set at runtime.
 # Default transport is stdio; override with --transport http --port 8100

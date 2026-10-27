@@ -211,9 +211,9 @@ async def search_memory(
 
     start = time.monotonic()
     logger.info(
-        "mcp.tool.invoke tool=%s query=%s types=%s limit=%d",
+        "mcp.tool.invoke tool=%s query_length=%d types=%s limit=%d",
         "search_memory",
-        query,
+        len(query),
         types,
         limit,
     )

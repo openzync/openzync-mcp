@@ -1,0 +1,1 @@
+Add a real `GET /health` liveness route (Starlette `custom_route`, excluded from the MCP schema) and switch the Docker `HEALTHCHECK` from a TCP connect to that endpoint, so orchestrator probes verify the process serves HTTP instead of just an open port.
