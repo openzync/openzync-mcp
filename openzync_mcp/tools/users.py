@@ -5,14 +5,11 @@ Provides user management operations for the OpenZync platform.
 
 from __future__ import annotations
 
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
-
-logger = logging.getLogger("openzync.mcp.tools.users")
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 
 @mcp.tool
@@ -44,8 +41,7 @@ async def create_user(
     if not external_id or not external_id.strip():
         raise ValueError("external_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s external_id=%s name=%s", "create_user", external_id, name)
+    start = log_invoke("create_user", " external_id=%s name=%s", external_id, name)
 
     client = get_client(ctx)
     try:
@@ -54,11 +50,10 @@ async def create_user(
             name=name,
         )
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d user_id=%s external_id=%s",
+        log_success(
             "create_user",
-            round(elapsed * 1000),
+            start,
+            " user_id=%s external_id=%s",
             user.id,
             user.external_id,
         )
@@ -70,12 +65,10 @@ async def create_user(
             f"  Name: {user.name}"
         )
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d external_id=%s",
+        log_error(
             "create_user",
-            round(elapsed * 1000),
+            start,
+            " external_id=%s",
             external_id,
-            exc_info=True,
         )
         raise

@@ -6,14 +6,11 @@ Session-scoped structured-extraction result queries.
 from __future__ import annotations
 
 import json
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
-
-logger = logging.getLogger("openzync.mcp.tools.extractions")
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 
 @mcp.tool
@@ -33,18 +30,16 @@ async def list_structured_extractions(ctx: Context, session_id: str) -> str:
     if not session_id or not session_id.strip():
         raise ValueError("session_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s session_id=%s", "list_structured_extractions", session_id)
+    start = log_invoke("list_structured_extractions", " session_id=%s", session_id)
 
     client = get_client(ctx)
     try:
         response = await client.structured_extractions.list(session_id)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d extraction_count=%d total=%d",
+        log_success(
             "list_structured_extractions",
-            round(elapsed * 1000),
+            start,
+            " extraction_count=%d total=%d",
             len(response.items),
             response.total,
         )
@@ -59,13 +54,11 @@ async def list_structured_extractions(ctx: Context, session_id: str) -> str:
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d session_id=%s",
+        log_error(
             "list_structured_extractions",
-            round(elapsed * 1000),
+            start,
+            " session_id=%s",
             session_id,
-            exc_info=True,
         )
         raise
 
@@ -86,10 +79,9 @@ async def get_structured_extraction(ctx: Context, session_id: str, episode_id: s
     if not episode_id or not episode_id.strip():
         raise ValueError("episode_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s session_id=%s episode_id=%s",
+    start = log_invoke(
         "get_structured_extraction",
+        " session_id=%s episode_id=%s",
         session_id,
         episode_id,
     )
@@ -98,11 +90,10 @@ async def get_structured_extraction(ctx: Context, session_id: str, episode_id: s
     try:
         ex = await client.structured_extractions.get_by_episode(session_id, episode_id)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d episode_id=%s",
+        log_success(
             "get_structured_extraction",
-            round(elapsed * 1000),
+            start,
+            " episode_id=%s",
             episode_id,
         )
 
@@ -112,13 +103,11 @@ async def get_structured_extraction(ctx: Context, session_id: str, episode_id: s
             f"  Data: {json.dumps(ex.data)}"
         )
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d session_id=%s episode_id=%s",
+        log_error(
             "get_structured_extraction",
-            round(elapsed * 1000),
+            start,
+            " session_id=%s episode_id=%s",
             session_id,
             episode_id,
-            exc_info=True,
         )
         raise

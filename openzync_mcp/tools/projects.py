@@ -5,14 +5,12 @@ Member management for the project resolved from the API key.
 
 from __future__ import annotations
 
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
-logger = logging.getLogger("openzync.mcp.tools.projects")
 
 _ALLOWED_ROLES = {"owner", "member"}
 
@@ -42,32 +40,26 @@ async def update_project_member(
     if role not in _ALLOWED_ROLES:
         raise ValueError(f"Invalid role: {role}. Allowed: {', '.join(sorted(_ALLOWED_ROLES))}.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s user_id=%s role=%s", "update_project_member", user_id, role
-    )
+    start = log_invoke("update_project_member", " user_id=%s role=%s", user_id, role)
 
     client = get_client(ctx)
     try:
         member = await client.projects.update_member(user_id, role=role)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d user_id=%s role=%s",
+        log_success(
             "update_project_member",
-            round(elapsed * 1000),
+            start,
+            " user_id=%s role=%s",
             user_id,
             role,
         )
         return f"Project member updated.\n  User ID: {member.user_id}\n  Role: {member.role}"
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d user_id=%s role=%s",
+        log_error(
             "update_project_member",
-            round(elapsed * 1000),
+            start,
+            " user_id=%s role=%s",
             user_id,
             role,
-            exc_info=True,
         )
         raise

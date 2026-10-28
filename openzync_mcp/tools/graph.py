@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 from typing import Any
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 logger = logging.getLogger("openzync.mcp.tools.graph")
 
@@ -57,10 +57,9 @@ async def get_user_graph(
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s entity_type=%s limit=%d",
+    start = log_invoke(
         "get_user_graph",
+        " entity_type=%s limit=%d",
         entity_type,
         limit,
     )
@@ -93,11 +92,10 @@ async def get_user_graph(
         entities = entities[:limit]
 
         if not entities:
-            elapsed = time.monotonic() - start
-            logger.info(
-                "mcp.tool.success tool=%s duration_ms=%d entity_count=0",
+            log_success(
                 "get_user_graph",
-                round(elapsed * 1000),
+                start,
+                " entity_count=0",
             )
             return "No entities found in the graph."
 
@@ -165,13 +163,10 @@ async def get_user_graph(
             if len(edges) >= limit:
                 break
 
-        elapsed = time.monotonic() - start
-
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d entity_count=%d edge_count=%d "
-            "edge_sources_queried=%d edge_sources_failed=%d",
+        log_success(
             "get_user_graph",
-            round(elapsed * 1000),
+            start,
+            " entity_count=%d edge_count=%d edge_sources_queried=%d edge_sources_failed=%d",
             len(entities),
             len(edges),
             len(source_entities),
@@ -198,12 +193,10 @@ async def get_user_graph(
 
         return "\n".join(text_parts)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d entity_type=%s",
+        log_error(
             "get_user_graph",
-            round(elapsed * 1000),
+            start,
+            " entity_type=%s",
             entity_type,
-            exc_info=True,
         )
         raise

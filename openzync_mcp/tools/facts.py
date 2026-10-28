@@ -7,15 +7,12 @@ their temporal validity and invalidation lineage.
 
 from __future__ import annotations
 
-import logging
-import time
 from datetime import UTC, datetime
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
-
-logger = logging.getLogger("openzync.mcp.tools.facts")
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 
 def _iso(value: datetime | None) -> str:
@@ -79,10 +76,9 @@ async def add_fact(
                 f"Fact at index {i} is missing required key(s): {', '.join(sorted(missing))}."
             )
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s fact_count=%d session_id=%s",
+    start = log_invoke(
         "add_fact",
+        " fact_count=%d session_id=%s",
         len(facts),
         session_id,
     )
@@ -93,11 +89,10 @@ async def add_fact(
             facts=facts,
             session_id=session_id,
         )
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d accepted_count=%d job_id=%s",
+        log_success(
             "add_fact",
-            round(elapsed * 1000),
+            start,
+            " accepted_count=%d job_id=%s",
             response.accepted_count,
             response.job_id,
         )
@@ -105,13 +100,11 @@ async def add_fact(
             f"{response.accepted_count} fact(s) accepted for processing (job: {response.job_id})."
         )
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d fact_count=%d",
+        log_error(
             "add_fact",
-            round(elapsed * 1000),
+            start,
+            " fact_count=%d",
             len(facts),
-            exc_info=True,
         )
         raise
 
@@ -150,10 +143,9 @@ async def list_facts(
     if offset < 0:
         raise ValueError("offset must be >= 0.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s limit=%d as_of=%s offset=%d cursor=%s",
+    start = log_invoke(
         "list_facts",
+        " limit=%d as_of=%s offset=%d cursor=%s",
         limit,
         as_of,
         offset,
@@ -164,11 +156,10 @@ async def list_facts(
     try:
         response = await client.facts.list(as_of=as_of, limit=limit, offset=offset, cursor=cursor)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d fact_count=%d has_more=%s",
+        log_success(
             "list_facts",
-            round(elapsed * 1000),
+            start,
+            " fact_count=%d has_more=%s",
             len(response.data),
             response.has_more,
         )
@@ -187,12 +178,10 @@ async def list_facts(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "list_facts",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise
 
@@ -214,18 +203,16 @@ async def get_fact_history(ctx: Context, fact_id: str) -> str:
     if not fact_id or not fact_id.strip():
         raise ValueError("fact_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s fact_id=%s", "get_fact_history", fact_id)
+    start = log_invoke("get_fact_history", " fact_id=%s", fact_id)
 
     client = get_client(ctx)
     try:
         response = await client.facts.history(fact_id)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d event_count=%d",
+        log_success(
             "get_fact_history",
-            round(elapsed * 1000),
+            start,
+            " event_count=%d",
             len(response.events),
         )
 
@@ -247,13 +234,11 @@ async def get_fact_history(ctx: Context, fact_id: str) -> str:
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d fact_id=%s",
+        log_error(
             "get_fact_history",
-            round(elapsed * 1000),
+            start,
+            " fact_id=%s",
             fact_id,
-            exc_info=True,
         )
         raise
 
@@ -282,18 +267,16 @@ async def retract_fact(
     if not fact_id or not fact_id.strip():
         raise ValueError("fact_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s fact_id=%s", "retract_fact", fact_id)
+    start = log_invoke("retract_fact", " fact_id=%s", fact_id)
 
     client = get_client(ctx)
     try:
         fact = await client.facts.retract(fact_id, reason=reason)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d fact_id=%s invalid_at=%s",
+        log_success(
             "retract_fact",
-            round(elapsed * 1000),
+            start,
+            " fact_id=%s invalid_at=%s",
             fact.id,
             _iso(fact.invalid_at),
         )
@@ -304,12 +287,10 @@ async def retract_fact(
             f"  Invalid at: {_iso(fact.invalid_at) or 'already closed'}"
         )
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d fact_id=%s",
+        log_error(
             "retract_fact",
-            round(elapsed * 1000),
+            start,
+            " fact_id=%s",
             fact_id,
-            exc_info=True,
         )
         raise

@@ -6,14 +6,11 @@ project conversation sessions.
 
 from __future__ import annotations
 
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
-
-logger = logging.getLogger("openzync.mcp.tools.sessions")
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 
 @mcp.tool
@@ -46,10 +43,9 @@ async def list_sessions(
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s limit=%d cursor=%s",
+    start = log_invoke(
         "list_sessions",
+        " limit=%d cursor=%s",
         limit,
         cursor,
     )
@@ -70,11 +66,10 @@ async def list_sessions(
         next_cursor = result.get("next_cursor")
         has_more = result.get("has_more", False)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d session_count=%d has_more=%s",
+        log_success(
             "list_sessions",
-            round(elapsed * 1000),
+            start,
+            " session_count=%d has_more=%s",
             len(sessions),
             has_more,
         )
@@ -97,12 +92,10 @@ async def list_sessions(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "list_sessions",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise
 
@@ -133,10 +126,9 @@ async def get_session_facts(
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s session_id=%s limit=%d cursor=%s",
+    start = log_invoke(
         "get_session_facts",
+        " session_id=%s limit=%d cursor=%s",
         session_id,
         limit,
         cursor,
@@ -146,11 +138,10 @@ async def get_session_facts(
     try:
         response = await client.sessions.facts(session_id, limit=limit, cursor=cursor)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d fact_count=%d has_more=%s",
+        log_success(
             "get_session_facts",
-            round(elapsed * 1000),
+            start,
+            " fact_count=%d has_more=%s",
             len(response.data),
             response.has_more,
         )
@@ -169,13 +160,11 @@ async def get_session_facts(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d session_id=%s",
+        log_error(
             "get_session_facts",
-            round(elapsed * 1000),
+            start,
+            " session_id=%s",
             session_id,
-            exc_info=True,
         )
         raise
 
@@ -204,10 +193,9 @@ async def get_session_messages(
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s session_id=%s limit=%d cursor=%s",
+    start = log_invoke(
         "get_session_messages",
+        " session_id=%s limit=%d cursor=%s",
         session_id,
         limit,
         cursor,
@@ -217,11 +205,10 @@ async def get_session_messages(
     try:
         response = await client.sessions.messages(session_id, limit=limit, cursor=cursor)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d message_count=%d has_more=%s",
+        log_success(
             "get_session_messages",
-            round(elapsed * 1000),
+            start,
+            " message_count=%d has_more=%s",
             len(response.data),
             response.has_more,
         )
@@ -241,12 +228,10 @@ async def get_session_messages(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d session_id=%s",
+        log_error(
             "get_session_messages",
-            round(elapsed * 1000),
+            start,
+            " session_id=%s",
             session_id,
-            exc_info=True,
         )
         raise

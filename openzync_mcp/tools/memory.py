@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import logging
 import os
-import time
 import uuid
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 logger = logging.getLogger("openzync.mcp.tools.memory")
 
@@ -69,10 +69,9 @@ async def add_memory(
     if len(messages) > 1000:
         raise ValueError("Maximum 1000 messages per call.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s message_count=%d session_id=%s",
+    start = log_invoke(
         "add_memory",
+        " message_count=%d session_id=%s",
         len(messages),
         session_id,
     )
@@ -87,11 +86,10 @@ async def add_memory(
             session_id=session_id,
             idempotency_key=idempotency_key or new_uuid().hex,
         )
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d episode_count=%d job_id=%s",
+        log_success(
             "add_memory",
-            round(elapsed * 1000),
+            start,
+            " episode_count=%d job_id=%s",
             response.episode_count,
             response.job_id,
         )
@@ -99,12 +97,10 @@ async def add_memory(
             f"Memory recorded. {response.episode_count} messages ingested (job: {response.job_id})."
         )
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "add_memory",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise
 
@@ -136,10 +132,9 @@ async def get_context(
     if not 1 <= limit <= 100:
         raise ValueError("limit must be between 1 and 100.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s query_length=%d limit=%d",
+    start = log_invoke(
         "get_context",
+        " query_length=%d limit=%d",
         len(query),
         limit,
     )
@@ -150,21 +145,18 @@ async def get_context(
             query=query,
             limit=limit,
         )
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d context_length=%d",
+        log_success(
             "get_context",
-            round(elapsed * 1000),
+            start,
+            " context_length=%d",
             len(response.context),
         )
         return response.context
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "get_context",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise
 
@@ -209,10 +201,9 @@ async def search_memory(
             f"Allowed: {', '.join(sorted(allowed_types))}."
         )
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s query_length=%d types=%s limit=%d",
+    start = log_invoke(
         "search_memory",
+        " query_length=%d types=%s limit=%d",
         len(query),
         types,
         limit,
@@ -226,11 +217,10 @@ async def search_memory(
             limit=limit,
         )
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d result_count=%d",
+        log_success(
             "search_memory",
-            round(elapsed * 1000),
+            start,
+            " result_count=%d",
             len(results),
         )
 
@@ -245,12 +235,10 @@ async def search_memory(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "search_memory",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise
 
@@ -291,23 +279,17 @@ async def delete_memory(ctx: Context, confirm: str) -> str:
             "delete_memory is not allowlisted — set OPENZYN_MCP_ALLOW_WIPE=true "
             "(admin only) to explicitly enable this destructive tool."
         )
-    start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s", "delete_memory")
+    start = log_invoke("delete_memory")
 
     client = get_client(ctx)
     try:
         await client.memory.delete(confirm=confirm)
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d", "delete_memory", round(elapsed * 1000)
-        )
+        log_success("delete_memory", start)
         return "Memory deleted successfully."
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "delete_memory",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise

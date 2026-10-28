@@ -113,6 +113,19 @@ async def test_delete_memory_success(mcp_client, mock_client, monkeypatch) -> No
     assert result.content[0].text == "Memory deleted successfully."
 
 
+async def test_delete_memory_gate_closed_without_allowlist(
+    mcp_client, mock_client, monkeypatch
+) -> None:
+    """Without OPENZYN_MCP_ALLOW_WIPE=true the wipe fails loud, pre-SDK."""
+    monkeypatch.delenv("OPENZYN_MCP_ALLOW_WIPE", raising=False)
+
+    with pytest.raises(ToolError, match="allowlist"):
+        await mcp_client.call_tool("delete_memory", {"confirm": "proj-123"})
+
+    # The gate fires before the SDK call — no backend request is ever made.
+    mock_client.memory.delete.assert_not_awaited()
+
+
 async def test_search_memory_empty_query(mcp_client, mock_client) -> None:
     with pytest.raises(ToolError, match="query must be a non-empty string."):
         await mcp_client.call_tool("search_memory", {"query": ""})
