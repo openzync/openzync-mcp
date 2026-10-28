@@ -6,14 +6,11 @@ arousal per episode).
 
 from __future__ import annotations
 
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
-
-logger = logging.getLogger("openzync.mcp.tools.classifications")
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 
 @mcp.tool
@@ -33,18 +30,16 @@ async def list_classifications(ctx: Context, session_id: str) -> str:
     if not session_id or not session_id.strip():
         raise ValueError("session_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info("mcp.tool.invoke tool=%s session_id=%s", "list_classifications", session_id)
+    start = log_invoke("list_classifications", " session_id=%s", session_id)
 
     client = get_client(ctx)
     try:
         response = await client.classifications.list(session_id)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d classification_count=%d total=%d",
+        log_success(
             "list_classifications",
-            round(elapsed * 1000),
+            start,
+            " classification_count=%d total=%d",
             len(response.data),
             response.total,
         )
@@ -61,13 +56,11 @@ async def list_classifications(ctx: Context, session_id: str) -> str:
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d session_id=%s",
+        log_error(
             "list_classifications",
-            round(elapsed * 1000),
+            start,
+            " session_id=%s",
             session_id,
-            exc_info=True,
         )
         raise
 
@@ -89,10 +82,9 @@ async def get_classification(ctx: Context, session_id: str, episode_id: str) -> 
     if not episode_id or not episode_id.strip():
         raise ValueError("episode_id must be a non-empty string.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s session_id=%s episode_id=%s",
+    start = log_invoke(
         "get_classification",
+        " session_id=%s episode_id=%s",
         session_id,
         episode_id,
     )
@@ -101,11 +93,10 @@ async def get_classification(ctx: Context, session_id: str, episode_id: str) -> 
     try:
         c = await client.classifications.get_by_episode(session_id, episode_id)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d episode_id=%s",
+        log_success(
             "get_classification",
-            round(elapsed * 1000),
+            start,
+            " episode_id=%s",
             episode_id,
         )
 
@@ -119,13 +110,11 @@ async def get_classification(ctx: Context, session_id: str, episode_id: str) -> 
             f"  Confidence: {c.confidence:.2f}"
         )
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d session_id=%s episode_id=%s",
+        log_error(
             "get_classification",
-            round(elapsed * 1000),
+            start,
+            " session_id=%s episode_id=%s",
             session_id,
             episode_id,
-            exc_info=True,
         )
         raise

@@ -5,14 +5,11 @@ Organization-wide resource search across projects, users, and sessions.
 
 from __future__ import annotations
 
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
-
-logger = logging.getLogger("openzync.mcp.tools.search")
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
 
 @mcp.tool
@@ -40,10 +37,9 @@ async def global_search(
     if not 1 <= limit <= 50:
         raise ValueError("limit must be between 1 and 50.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s query_length=%d limit=%d",
+    start = log_invoke(
         "global_search",
+        " query_length=%d limit=%d",
         len(query),
         limit,
     )
@@ -52,11 +48,10 @@ async def global_search(
     try:
         response = await client.search.global_search(query=query, limit=limit)
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d result_count=%d",
+        log_success(
             "global_search",
-            round(elapsed * 1000),
+            start,
+            " result_count=%d",
             len(response.results),
         )
 
@@ -70,11 +65,9 @@ async def global_search(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d",
+        log_error(
             "global_search",
-            round(elapsed * 1000),
-            exc_info=True,
+            start,
+            "",
         )
         raise

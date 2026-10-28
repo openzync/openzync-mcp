@@ -6,14 +6,12 @@ background worker.
 
 from __future__ import annotations
 
-import logging
-import time
 
 from fastmcp import Context
 
 from openzync_mcp.server import get_client, mcp
+from openzync_mcp.tools._log import log_error, log_invoke, log_success
 
-logger = logging.getLogger("openzync.mcp.tools.observations")
 
 _ALLOWED_OBSERVATION_TYPES = {"co_occurrence", "temporal_pattern", "behavioral_pattern"}
 
@@ -49,10 +47,9 @@ async def list_observations(
     if not 1 <= limit <= 200:
         raise ValueError("limit must be between 1 and 200.")
 
-    start = time.monotonic()
-    logger.info(
-        "mcp.tool.invoke tool=%s subject_entity_id=%s observation_type=%s limit=%d",
+    start = log_invoke(
         "list_observations",
+        " subject_entity_id=%s observation_type=%s limit=%d",
         subject_entity_id,
         observation_type,
         limit,
@@ -66,11 +63,10 @@ async def list_observations(
             limit=limit,
         )
 
-        elapsed = time.monotonic() - start
-        logger.info(
-            "mcp.tool.success tool=%s duration_ms=%d observation_count=%d total=%d",
+        log_success(
             "list_observations",
-            round(elapsed * 1000),
+            start,
+            " observation_count=%d total=%d",
             len(response.data),
             response.total,
         )
@@ -91,12 +87,10 @@ async def list_observations(
 
         return "\n".join(lines)
     except Exception:
-        elapsed = time.monotonic() - start
-        logger.error(
-            "mcp.tool.error tool=%s duration_ms=%d observation_type=%s",
+        log_error(
             "list_observations",
-            round(elapsed * 1000),
+            start,
+            " observation_type=%s",
             observation_type,
-            exc_info=True,
         )
         raise
