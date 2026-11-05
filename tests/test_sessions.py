@@ -78,9 +78,7 @@ async def test_get_session_facts_success(mcp_client, mock_client) -> None:
         "get_session_facts", {"session_id": "sess-uuid-1", "limit": 10}
     )
 
-    mock_client.sessions.facts.assert_awaited_once_with(
-        "sess-uuid-1", limit=10, cursor=None
-    )
+    mock_client.sessions.facts.assert_awaited_once_with("sess-uuid-1", limit=10, cursor=None)
     text = result.content[0].text
     assert "Found 1 fact(s):" in text
     assert "[0.90] Alice works at OpenZync" in text
@@ -129,9 +127,7 @@ async def test_get_session_messages_success(mcp_client, mock_client) -> None:
         "get_session_messages", {"session_id": "sess-uuid-1", "limit": 5}
     )
 
-    mock_client.sessions.messages.assert_awaited_once_with(
-        "sess-uuid-1", limit=5, cursor=None
-    )
+    mock_client.sessions.messages.assert_awaited_once_with("sess-uuid-1", limit=5, cursor=None)
     text = result.content[0].text
     assert "Found 1 message(s):" in text
     assert "[user] Hello world" in text  # newlines flattened
@@ -153,9 +149,7 @@ async def test_get_session_facts_cursor_forwarding(mcp_client, mock_client) -> N
         "get_session_facts", {"session_id": "sess-uuid-1", "cursor": "cur-9"}
     )
 
-    mock_client.sessions.facts.assert_awaited_once_with(
-        "sess-uuid-1", limit=50, cursor="cur-9"
-    )
+    mock_client.sessions.facts.assert_awaited_once_with("sess-uuid-1", limit=50, cursor="cur-9")
 
 
 async def test_get_session_messages_cursor_forwarding(mcp_client, mock_client) -> None:
@@ -172,9 +166,7 @@ async def test_get_session_messages_cursor_forwarding(mcp_client, mock_client) -
         "get_session_messages", {"session_id": "sess-uuid-1", "cursor": "cur-7"}
     )
 
-    mock_client.sessions.messages.assert_awaited_once_with(
-        "sess-uuid-1", limit=50, cursor="cur-7"
-    )
+    mock_client.sessions.messages.assert_awaited_once_with("sess-uuid-1", limit=50, cursor="cur-7")
 
 
 async def test_get_session_messages_validation(mcp_client, mock_client) -> None:

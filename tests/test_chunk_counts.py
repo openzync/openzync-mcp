@@ -27,15 +27,12 @@ class TestMCPChunkCounts:
         import unittest.mock as mock
 
         results = [
-            {"content": f"chunk-{i} " + "x" * 500, "rrf_score": 0.9 - i * 0.1}
-            for i in range(5)
+            {"content": f"chunk-{i} " + "x" * 500, "rrf_score": 0.9 - i * 0.1} for i in range(5)
         ]
         client = MagicMock()
         client.graph.search = AsyncMock(return_value=results)
         ctx = MagicMock()
-        with mock.patch(
-            "openzync_mcp.tools.memory.get_client", return_value=client
-        ):
+        with mock.patch("openzync_mcp.tools.memory.get_client", return_value=client):
             out = await search_memory(ctx, query="q", limit=20)
         lines = out.splitlines()
         # header + one line per chunk
@@ -52,8 +49,6 @@ class TestMCPChunkCounts:
         client = MagicMock()
         client.graph.search = AsyncMock(return_value=[])
         ctx = MagicMock()
-        with mock.patch(
-            "openzync_mcp.tools.memory.get_client", return_value=client
-        ):
+        with mock.patch("openzync_mcp.tools.memory.get_client", return_value=client):
             out = await search_memory(ctx, query="q")
         assert out == "No results found."
