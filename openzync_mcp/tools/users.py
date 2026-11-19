@@ -20,10 +20,9 @@ async def create_user(
 ) -> str:
     """Create a new user in the system.
 
-    Users represent end-users within an organization.  The ``external_id``
-    is chosen by the calling application (e.g. a UUID from the customer's
-    auth system).  The combination ``(organization_id, external_id)`` is
-    unique within the platform.
+    Users are owned by the caller's own user ID (no org layer).  The
+    ``external_id`` is chosen by the calling application (e.g. a UUID from
+    the customer's auth system) and is globally unique (``uq_user_external``).
 
     Requires a credential holding the ``members:write`` permission
     (ADR-007 unified permission model — org-admin JWT sessions and API
