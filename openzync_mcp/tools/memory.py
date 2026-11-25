@@ -89,18 +89,37 @@ async def add_memory(
         log_success(
             "add_memory",
             start,
-            " episode_count=%d job_id=%s",
+            " episode_count=%d job_id=%s degraded=%s",
             response.episode_count,
             response.job_id,
+            getattr(response, "degraded", False),
         )
-        return (
+        result = (
             f"Memory recorded. {response.episode_count} messages ingested (job: {response.job_id})."
         )
-    except Exception:
+        if getattr(response, "degraded", False):
+            reason = getattr(response, "degrade_reason", None) or "unknown"
+            logger.warning(
+                "mcp.tool.degraded tool=%s job_id=%s reason=%s",
+                "add_memory",
+                response.job_id,
+                reason,
+            )
+            result += (
+                f" Warning: ingest degraded ({reason}) — data is committed, "
+                "enrichment will be retried server-side."
+            )
+        return result
+    except Exception as exc:
+        # 409s carry the winning claim's job_id on exc.detail (and in the
+        # SDK message) — log it so MCP error output surfaces it.
+        detail = getattr(exc, "detail", None)
+        job_id = detail.get("job_id") if isinstance(detail, dict) else None
         log_error(
             "add_memory",
             start,
-            "",
+            " job_id=%s" if job_id else "",
+            *( (job_id,) if job_id else ()),
         )
         raise
 
@@ -283,8 +302,19 @@ async def delete_memory(ctx: Context, confirm: str) -> str:
 
     client = get_client(ctx)
     try:
-        await client.memory.delete(confirm=confirm)
+        complete = await client.memory.delete(confirm=confirm)
         log_success("delete_memory", start)
+        if not complete:
+            logger.warning(
+                "mcp.tool.partial_wipe tool=%s confirm_present=%s confirm_len=%d",
+                "delete_memory",
+                True,
+                len(confirm),
+            )
+            return (
+                "Memory deleted, but the S3 blob sweep partially failed "
+                "(server will retry leftovers) — verify blobs if needed."
+            )
         return "Memory deleted successfully."
     except Exception:
         log_error(
