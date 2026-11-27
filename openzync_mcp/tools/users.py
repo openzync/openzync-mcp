@@ -1,10 +1,9 @@
-"""User tool — create_user.
+"""User tools — create_user.
 
-Provides user management operations for the OpenZync platform.
+Provides dashboard user creation by caller-defined external ID.
 """
 
 from __future__ import annotations
-
 
 from fastmcp import Context
 
@@ -18,29 +17,23 @@ async def create_user(
     external_id: str,
     name: str | None = None,
 ) -> str:
-    """Create a new user in the system.
-
-    Users are owned by the caller's own user ID (no org layer).  The
-    ``external_id`` is chosen by the calling application (e.g. a UUID from
-    the customer's auth system) and is globally unique (``uq_user_external``).
-
-    Requires a credential holding the ``members:write`` permission
-    (ADR-007 unified permission model — org-admin JWT sessions and API
-    keys with that scope both qualify).  Credentials without it are
-    rejected by the backend.
+    """Create a user by caller-defined external ID.
 
     Args:
-        external_id: Caller-defined user identifier
-            (e.g. ``"customer-abc-123"``).  Must be non-empty.
-        name: Optional display name for the user.
+        external_id: Caller-defined user identifier (must be non-empty).
+        name: Optional display name.
 
     Returns:
-        A confirmation message with the created user's ID and details.
+        A formatted string confirming creation with IDs.
     """
     if not external_id or not external_id.strip():
         raise ValueError("external_id must be a non-empty string.")
 
-    start = log_invoke("create_user", " external_id=%s name=%s", external_id, name)
+    start = log_invoke(
+        "create_user",
+        " external_id=%s",
+        external_id,
+    )
 
     client = get_client(ctx)
     try:
@@ -52,22 +45,22 @@ async def create_user(
         log_success(
             "create_user",
             start,
-            " user_id=%s external_id=%s",
+            " user_id=%s",
             user.id,
-            user.external_id,
         )
 
-        return (
-            f"User created successfully.\n"
-            f"  ID: {user.id}\n"
-            f"  External ID: {user.external_id}\n"
-            f"  Name: {user.name}"
-        )
+        lines = [
+            "User created successfully.",
+            f"ID: {user.id}",
+            f"External ID: {user.external_id}",
+        ]
+        if user.name is not None:
+            lines.append(f"Name: {user.name}")
+        return "\n".join(lines)
     except Exception:
         log_error(
             "create_user",
             start,
-            " external_id=%s",
-            external_id,
+            "",
         )
         raise

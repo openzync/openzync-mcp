@@ -1,0 +1,1 @@
+Returned an explicit partial-wipe message from `delete_memory` (with an `mcp.tool.partial_wipe` warning log, redacting the confirm value) when the S3 blob sweep partially failed, instead of reporting full success.

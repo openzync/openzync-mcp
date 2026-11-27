@@ -115,7 +115,7 @@ mcp = FastMCP(
         "agent memory.  Provides tools to ingest conversation messages, "
         "retrieve context for LLM prompts, search across episodes and "
         "facts, manage facts, explore the knowledge graph, and manage "
-        "users and sessions."
+        "sessions."
     ),
     version="1.0.0b2",
     lifespan=openzync_lifespan,

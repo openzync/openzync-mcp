@@ -21,11 +21,11 @@ __all__ = [
     "memory",
     "facts",
     "graph",
-    "users",
     "sessions",
     "search",
     "observations",
     "classifications",
     "extractions",
     "projects",
+    "users",
 ]

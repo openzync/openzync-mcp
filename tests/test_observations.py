@@ -12,6 +12,7 @@ def make_observation(**overrides) -> ObservationResponse:
     defaults = {
         "id": "obs-1",
         "user_id": "user-1",
+        "organization_id": "org-1",
         "project_id": "proj-1",
         "subject_entity_id": "ent-1",
         "observation_type": "co_occurrence",

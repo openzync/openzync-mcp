@@ -47,7 +47,6 @@ flowchart LR
 | `list_structured_extractions` | Structured extractions for a session |
 | `get_structured_extraction` | Structured extraction for one episode |
 | `global_search` | Search across projects, users and sessions in the org |
-| `create_user` | Create a user (needs `members:write`) |
 | `update_project_member` | Change a member's role (needs `project:manage`) |
 
 ## Install and run

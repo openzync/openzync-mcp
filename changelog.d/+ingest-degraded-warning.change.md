@@ -1,0 +1,1 @@
+Warned loudly on degraded ingest in `add_memory`: the tool now logs `mcp.tool.degraded` with the job id and reason and appends the degradation warning to the result message, instead of reporting success silently.
